@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/app-icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="データ引継ぎ">
+  <meta name="theme-color" content="#AF52DE">
+  <title>データ引継ぎ - Sky所持率管理</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #F2F2F7;
+      --card:      #FFFFFF;
+      --sep:       rgba(60,60,67,0.12);
+      --purple:    #AF52DE;
+      --purple-d:  #8E3FB8;
+      --purple-bg: rgba(175,82,222,0.10);
+      --blue:      #007AFF;
+      --green:     #34C759;
+      --red:       #FF3B30;
+      --text:      #1C1C1E;
+      --text-2:    #8E8E93;
+      --text-3:    #C7C7CC;
+      --r:         16px;
+      --r-sm:      10px;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    a { text-decoration:none; color:inherit; -webkit-tap-highlight-color:transparent; }
+    button { cursor:pointer; border:none; background:none; font-family:inherit; }
+    input, select, textarea { font-family:inherit; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 60px;
+    }
+
+    nav {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(242,242,247,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--sep); padding: 14px 20px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+    .sidebar-toggle-btn {
+      background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm);
+      padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text);
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    @media (min-width: 850px) { .sidebar-toggle-btn { visibility: hidden; } }
+
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 499; }
+    .sidebar-overlay.show { display: block; }
+
+    .app-layout { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 850px) { .app-layout { max-width: 960px; display: flex; gap: 20px; align-items: flex-start; } }
+    .wrap { flex: 1; min-width: 0; }
+
+    .sidebar {
+      width: 200px; flex-shrink: 0; position: sticky; top: 58px;
+      background: var(--card); border-radius: var(--r); padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: none; margin-top: 22px;
+    }
+    @media (min-width: 850px) { .sidebar { display: block; } }
+    .sidebar.sidebar-open {
+      display: flex !important; flex-direction: column; position: fixed; top: 0; left: 0;
+      height: 100%; width: 240px; z-index: 500; overflow-y: auto; margin-top: 0;
+      border-radius: 0 12px 12px 0; box-shadow: 4px 0 24px rgba(0,0,0,0.2);
+    }
+    .sidebar-close-btn {
+      background: none; border: none; font-size: 22px; cursor: pointer;
+      color: var(--text-2); padding: 0; line-height: 1; flex-shrink: 0; display: none;
+    }
+    .sidebar.sidebar-open .sidebar-close-btn { display: block; }
+    .sidebar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .sidebar-section-label { font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
+    .sidebar-nav-link {
+      display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: var(--r-sm);
+      color: var(--text); font-size: 13.5px; font-weight: 500; margin-bottom: 2px;
+      width: 100%; box-sizing: border-box;
+    }
+    .sidebar-nav-link:hover { background: var(--bg); }
+    .sidebar-nav-link.current-tool { background: var(--purple-bg); color: var(--purple-d); font-weight: 700; }
+
+    .sec-label { font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.4px; padding: 22px 4px 10px; }
+    .card { background: var(--card); border-radius: var(--r); padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .hint { font-size: 12.5px; color: var(--text-2); line-height: 1.7; margin-bottom: 14px; }
+
+    .site-opt {
+      display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 0.5px solid var(--sep);
+      cursor: pointer;
+    }
+    .site-opt:last-of-type { border-bottom: none; }
+    .site-opt input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--purple); }
+    .site-opt-label { flex: 1; font-size: 14px; color: var(--text); }
+    .site-opt-count { font-size: 12px; color: var(--text-2); }
+    .site-opt.no-data { opacity: 0.45; }
+
+    .action-btn {
+      display: block; width: 100%; padding: 12px; border-radius: var(--r-sm); font-size: 14.5px; font-weight: 700;
+      text-align: center; cursor: pointer; margin-top: 12px; box-sizing: border-box;
+    }
+    .action-btn.primary { background: var(--purple); color: #fff; }
+    .action-btn.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--sep); }
+
+    .code-textarea {
+      width: 100%; box-sizing: border-box; border: 1px solid var(--sep); border-radius: var(--r-sm);
+      padding: 10px 12px; font-size: 11px; font-family: monospace; color: var(--text);
+      resize: vertical; min-height: 110px; background: var(--bg); outline: none; margin-top: 10px;
+    }
+    .code-textarea:focus { border-color: var(--purple); }
+    .status-msg { font-size: 12.5px; color: var(--text-2); margin-top: 10px; line-height: 1.6; }
+    .status-msg.ok { color: var(--green); }
+    .status-msg.err { color: var(--red); }
+
+    footer { text-align: center; font-size: 11.5px; color: var(--text-3); padding: 34px 16px 12px; line-height: 1.9; }
+    footer a { color: var(--purple-d); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-title">🔄 データ引継ぎ</div>
+  <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰ ツール</button>
+</nav>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-section-label">🔗 関連ツール</div>
+      <button class="sidebar-close-btn" onclick="toggleSidebar()">✕</button>
+    </div>
+    <a href="https://taipak5000.github.io/m/" class="sidebar-nav-link">🗂️ アイテム所持管理</a>
+    <a href="https://taipak5000.github.io/share/" class="sidebar-nav-link">📍 創作物管理ツール</a>
+    <a href="https://taipak5000.github.io/star-candle/" class="sidebar-nav-link">🕯️ 星のキャンドル計算機</a>
+    <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link">✨ 精霊同行ツール</a>
+    <a href="https://taipak5000.github.io/spirit-catalog/" class="sidebar-nav-link">🌳 精霊ツリー管理</a>
+    <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link">🪽 羽トラッカー</a>
+    <a href="https://taipak5000.github.io/e/" class="sidebar-nav-link">🎭 エモート所持率管理</a>
+    <a href="https://taipak5000.github.io/data-transfer/" class="sidebar-nav-link current-tool">🔄 データ引継ぎ</a>
+  </aside>
+
+  <div class="wrap">
+    <p class="sec-label">📤 引き継ぎコードを作成</p>
+    <div class="card">
+      <div class="hint">
+        Dropbox等の外部サービスを使わず、コピー&amp;ペーストできる「コード」の形でデータを引き継げます。
+        引き継ぎたいサイトだけを選んでコードを作成し、別の端末の「コードから復元」に貼り付けてください。
+        このブラウザに保存されているデータが対象で、taipak5000.github.io系ツール共通のプロフィール（保存枠）は
+        常に一緒に引き継がれます。
+      </div>
+      <div id="exportSiteList"></div>
+      <button type="button" class="action-btn primary" onclick="generateExportCode()">📋 選んだサイトのコードを作成</button>
+      <div id="exportOutputArea"></div>
+      <div id="exportStatus" class="status-msg"></div>
+    </div>
+
+    <p class="sec-label">📥 コードから復元</p>
+    <div class="card">
+      <div class="hint">
+        別の端末で作成した引き継ぎコードをここに貼り付けてください。コードに含まれるサイトが自動で検出され、
+        その中から復元したいものだけを選べます。
+      </div>
+      <textarea id="importCodeInput" class="code-textarea" placeholder="ここに引き継ぎコードを貼り付け"></textarea>
+      <button type="button" class="action-btn secondary" onclick="loadCodeForImport()">🔍 コードを読み込む</button>
+      <div id="importSiteArea"></div>
+      <div id="importConfirmArea"></div>
+      <div id="importStatus" class="status-msg"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。<br>
+  作成・ご意見: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／
+  <a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">リクエストフォーム</a>
+</footer>
+
+<script>
+/* ================================================================
+   サイドバー開閉
+   ================================================================ */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('sidebar-open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+
+/* ================================================================
+   サイト別 localStorage キーのカタログ
+   taipak5000.github.io 配下の各ツールは同一オリジンでlocalStorageを
+   共有しているため、「どのキーがどのサイトのものか」をここで定義する。
+   namespaced:true のサイトは、プロフィール（保存枠）ごとに
+   `<key>__p_<profileId>` という接尾辞が付く（nsKey()と同じ命名規則）ため、
+   その全プロフィール分をまとめて対象にする。
+   ================================================================ */
+const SITE_CATALOG = [
+  { id: 'item', label: '🗂️ アイテム所持管理', namespaced: true, keys: [
+    'gameItems_outfit', 'gameItems_shoes', 'gameItems_mask', 'gameItems_face_accessory', 'gameItems_necklace',
+    'gameItems_hairstyle', 'gameItems_hair_accessory', 'gameItems_head_accessory', 'gameItems_cape',
+    'gameItems_portable_item', 'gameItems_large_placeable', 'gameItems_small_placeable',
+    'seasonAcquireMode_v1', 'shareCustomize_v1', 'favShareStyle_v1', 'favShareTheme_v1',
+    'gameItems_viewMode', 'gameItems_gridCols'
+  ]},
+  { id: 'wings', label: '🪽 羽トラッカー', namespaced: true, keys: [
+    'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1'
+  ]},
+  { id: 'companion', label: '✨ 精霊同行ツール', namespaced: true, keys: [
+    'sky_companion_v4_data', 'sky_companion_records_meta_v1'
+  ]},
+  { id: 'star-candle', label: '🕯️ 星のキャンドル計算機', namespaced: true, keys: [
+    'skyStarCandleCalc_v1', 'skyStarCandleCalc_checkedDays_v1', 'skyStarCandleCalc_history_v1'
+  ]},
+  { id: 'share', label: '📍 創作物管理ツール', namespaced: true, keys: [
+    'sky_tracker_storage'
+  ]},
+  { id: 'emote', label: '🎭 エモート所持率管理', namespaced: true, keys: [
+    'emoteOwned_v1', 'emoteShareCustomize_v1', 'emoteViewMode_v1'
+  ]},
+  { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', namespaced: true, keys: [
+    'spiritCatalogUnlocked_v1'
+  ]},
+  { id: 'currency', label: '💰 所持通貨（共通）', namespaced: true, keys: [
+    'wishOwnCurrency', 'skyCurrencyExtra_v1'
+  ]},
+  { id: 'skyzztai', label: '🕯️ Skyキャンドル計算機（旧版・リアルム/エリア情報）', namespaced: false, keys: [
+    'sky_tracker_storage_v3', 'sky_shard_sync_date', 'sky_skill_answered', 'sky_skill_level_key',
+    'sky_current_time_mult', 'sky_area_view_mode', 'sky_atlas_bg_opacity'
+  ]},
+];
+// プロフィール（保存枠）そのものの登録情報。どのサイトを選んでも常に一緒に引き継ぐ
+// （個別データだけ引き継いでプロフィール一覧が無いと、切り替え表示がおかしくなるため）。
+const PROFILE_REGISTRY_KEYS = ['skyProfiles_v1', 'skyActiveProfile_v1'];
+
+function getAllLocalStorageKeys() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+  return keys;
+}
+function matchKeysForSite(site, keyPool) {
+  return keyPool.filter(k => site.keys.some(prefix =>
+    site.namespaced ? (k === prefix || k.startsWith(prefix + '__p_')) : (k === prefix)
+  ));
+}
+
+/* ================================================================
+   Base64（UTF-8セーフ）エンコード/デコード
+   ================================================================ */
+function encodeBase64Utf8(str) {
+  const uint8array = new TextEncoder().encode(str);
+  let binString = '';
+  for (let i = 0; i < uint8array.length; i++) binString += String.fromCharCode(uint8array[i]);
+  return btoa(binString);
+}
+function decodeBase64Utf8(b64) {
+  const binString = atob(b64);
+  const uint8array = new Uint8Array(binString.length);
+  for (let i = 0; i < binString.length; i++) uint8array[i] = binString.charCodeAt(i);
+  return new TextDecoder().decode(uint8array);
+}
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ================================================================
+   📤 エクスポート（サイト選択 → コード作成）
+   ================================================================ */
+function renderExportSiteList() {
+  const allKeys = getAllLocalStorageKeys();
+  const el = document.getElementById('exportSiteList');
+  el.innerHTML = SITE_CATALOG.map(site => {
+    const matched = matchKeysForSite(site, allKeys);
+    const hasData = matched.length > 0;
+    return `
+      <label class="site-opt ${hasData ? '' : 'no-data'}">
+        <input type="checkbox" class="site-checkbox" data-site="${site.id}" ${hasData ? 'checked' : ''}>
+        <span class="site-opt-label">${site.label}</span>
+        <span class="site-opt-count">${matched.length}件</span>
+      </label>`;
+  }).join('');
+}
+
+function generateExportCode() {
+  const statusEl = document.getElementById('exportStatus');
+  const outputEl = document.getElementById('exportOutputArea');
+  statusEl.className = 'status-msg';
+  statusEl.textContent = '';
+  outputEl.innerHTML = '';
+
+  const allKeys = getAllLocalStorageKeys();
+  const selectedIds = [...document.querySelectorAll('#exportSiteList .site-checkbox:checked')].map(el => el.dataset.site);
+  if (selectedIds.length === 0) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = '少なくとも1つサイトを選んでください。';
+    return;
+  }
+
+  const dump = {};
+  PROFILE_REGISTRY_KEYS.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v !== null) dump[k] = v;
+  });
+  selectedIds.forEach(id => {
+    const site = SITE_CATALOG.find(s => s.id === id);
+    matchKeysForSite(site, allKeys).forEach(k => { dump[k] = localStorage.getItem(k); });
+  });
+
+  const payload = {
+    exportedFrom: 'taipak5000.github.io/data-transfer/',
+    exportedAt: new Date().toISOString(),
+    sites: selectedIds,
+    data: dump
+  };
+  let code;
+  try {
+    code = encodeBase64Utf8(JSON.stringify(payload));
+  } catch (e) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = 'コードの生成に失敗しました。';
+    return;
+  }
+
+  const siteLabels = selectedIds.map(id => (SITE_CATALOG.find(s => s.id === id) || {}).label || id).join('、');
+  outputEl.innerHTML = `
+    <div class="status-msg">選択したサイト: ${escapeHtml(siteLabels)}（${Object.keys(dump).length}件のキー、約${Math.round(code.length / 1000)}千文字）</div>
+    <textarea id="codeOutput" class="code-textarea" readonly onclick="this.select()">${escapeHtml(code)}</textarea>
+    <button type="button" class="action-btn primary" onclick="copyExportCode()">📋 コードをコピー</button>
+  `;
+}
+
+async function copyExportCode() {
+  const ta = document.getElementById('codeOutput');
+  if (!ta) return;
+  ta.select();
+  const statusEl = document.getElementById('exportStatus');
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    statusEl.className = 'status-msg ok';
+    statusEl.textContent = 'コピーしました。別の端末の「コードから復元」に貼り付けてください。';
+  } catch (e) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = 'コピーに失敗しました。コードが選択された状態なので、手動でコピーしてください。';
+  }
+}
+
+/* ================================================================
+   📥 インポート（コード読み込み → サイト選択 → 復元）
+   ================================================================ */
+let pendingImportData = null;
+
+function loadCodeForImport() {
+  const statusEl = document.getElementById('importStatus');
+  const siteAreaEl = document.getElementById('importSiteArea');
+  const confirmAreaEl = document.getElementById('importConfirmArea');
+  statusEl.className = 'status-msg';
+  statusEl.textContent = '';
+  siteAreaEl.innerHTML = '';
+  confirmAreaEl.innerHTML = '';
+  pendingImportData = null;
+
+  const code = document.getElementById('importCodeInput').value.trim();
+  if (!code) return;
+
+  let payload;
+  try {
+    payload = JSON.parse(decodeBase64Utf8(code));
+  } catch (e) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = 'コードの読み込みに失敗しました（コードの一部が欠けているか、正しくないコードです）。';
+    return;
+  }
+  const data = payload && payload.data && typeof payload.data === 'object' ? payload.data : null;
+  if (!data) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = 'このツールで作成したコードではないようです。';
+    return;
+  }
+
+  pendingImportData = data;
+  const dataKeys = Object.keys(data);
+  const detected = SITE_CATALOG.filter(site => matchKeysForSite(site, dataKeys).length > 0);
+  if (detected.length === 0) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = 'コードの中に、対応するサイトのデータが見つかりませんでした。';
+    return;
+  }
+
+  siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">復元するサイトを選んでください：</div>` +
+    detected.map(site => {
+      const matched = matchKeysForSite(site, dataKeys);
+      return `
+        <label class="site-opt">
+          <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked>
+          <span class="site-opt-label">${site.label}</span>
+          <span class="site-opt-count">${matched.length}件</span>
+        </label>`;
+    }).join('');
+  confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="confirmImport()">✅ 選んだサイトを復元する</button>`;
+}
+
+function confirmImport() {
+  if (!pendingImportData) return;
+  const statusEl = document.getElementById('importStatus');
+  const dataKeys = Object.keys(pendingImportData);
+  const selectedIds = [...document.querySelectorAll('#importSiteArea .import-site-checkbox:checked')].map(el => el.dataset.site);
+  if (selectedIds.length === 0) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = '少なくとも1つサイトを選んでください。';
+    return;
+  }
+
+  let count = 0;
+  PROFILE_REGISTRY_KEYS.forEach(k => {
+    if (pendingImportData[k] !== undefined) { localStorage.setItem(k, pendingImportData[k]); count++; }
+  });
+  selectedIds.forEach(id => {
+    const site = SITE_CATALOG.find(s => s.id === id);
+    matchKeysForSite(site, dataKeys).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
+  });
+
+  statusEl.className = 'status-msg ok';
+  statusEl.textContent = `${count}件のキーを復元しました。`;
+  pendingImportData = null;
+  document.getElementById('importSiteArea').innerHTML = '';
+  document.getElementById('importConfirmArea').innerHTML = '';
+  document.getElementById('importCodeInput').value = '';
+}
+
+/* ================================================================
+   初期化
+   ================================================================ */
+renderExportSiteList();
+</script>
+</body>
+</html>
