@@ -1,4 +1,4 @@
-# [データ引継ぎ](https://taipak5000.github.io/data-transfer/)
+# [データ引継ぎ](https://taipak5000.github.io/tai-transfer/)
 
 Sky所持率管理ツール群（item・wings・companion・star-candle・share・emote・spirit-catalog等）のデータを、
 Dropboxなどの外部サービスを使わずに、サイトを選んでコードの形で他の端末へ引き継ぐためのツールです。
