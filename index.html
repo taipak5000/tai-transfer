@@ -113,6 +113,10 @@
       resize: vertical; min-height: 110px; background: var(--bg); outline: none; margin-top: 10px;
     }
     .code-textarea:focus { border-color: var(--purple); }
+    input[type="file"] {
+      width: 100%; box-sizing: border-box; font-size: 12.5px; color: var(--text-2);
+      border: 1px dashed var(--sep); border-radius: var(--r-sm); padding: 10px 12px; margin-top: 10px;
+    }
     .status-msg { font-size: 12.5px; color: var(--text-2); margin-top: 10px; line-height: 1.6; }
     .status-msg.ok { color: var(--green); }
     .status-msg.err { color: var(--red); }
@@ -150,8 +154,10 @@
     <p class="sec-label">📤 引き継ぎコードを作成</p>
     <div class="card">
       <div class="hint">
-        Dropbox等の外部サービスを使わず、コピー&amp;ペーストできる「コード」の形でデータを引き継げます。
-        引き継ぎたいサイトだけを選んでコードを作成し、別の端末の「コードから復元」に貼り付けてください。
+        Dropbox等の外部サービスを使わず、ファイルまたはコピー&amp;ペーストで端末間のデータを引き継げます。
+        引き継ぎたいサイトだけを選んでコードを作成し、別の端末の「コードから復元」に読み込んでください。
+        コードは自動で圧縮されますが、長くなりやすいので「ファイルとしてダウンロード」がおすすめです
+        （AirDropやメッセージアプリへの添付で送れます）。
         このブラウザに保存されているデータが対象で、taipak5000.github.io系ツール共通のプロフィール（保存枠）は
         常に一緒に引き継がれます。
       </div>
@@ -164,9 +170,11 @@
     <p class="sec-label">📥 コードから復元</p>
     <div class="card">
       <div class="hint">
-        別の端末で作成した引き継ぎコードをここに貼り付けてください。コードに含まれるサイトが自動で検出され、
-        その中から復元したいものだけを選べます。
+        別の端末で作成した引き継ぎコードを、ファイルから読み込むか、ここに貼り付けてください。
+        コードに含まれるサイトが自動で検出され、その中から復元したいものだけを選べます。
       </div>
+      <input type="file" id="importFileInput" accept=".txt,.json" onchange="handleImportFile(event)">
+      <div class="hint" style="margin:10px 0 6px;">またはコードを直接貼り付け：</div>
       <textarea id="importCodeInput" class="code-textarea" placeholder="ここに引き継ぎコードを貼り付け"></textarea>
       <button type="button" class="action-btn secondary" onclick="loadCodeForImport()">🔍 コードを読み込む</button>
       <div id="importSiteArea"></div>
@@ -250,19 +258,55 @@ function matchKeysForSite(site, keyPool) {
 }
 
 /* ================================================================
-   Base64（UTF-8セーフ）エンコード/デコード
+   コードの圧縮/展開 + Base64（UTF-8セーフ）
+   「コードが長すぎる」というフィードバックを受けて、JSON文字列をgzip圧縮
+   （CompressionStream、外部ライブラリ不要）してからBase64化し、コードの
+   文字数を大幅に短縮している。未対応ブラウザでは無圧縮（U1:）にフォール
+   バックする。「:」はBase64に現れない文字なので、旧形式（無印コード）とも
+   衝突せず判別できる。
    ================================================================ */
-function encodeBase64Utf8(str) {
-  const uint8array = new TextEncoder().encode(str);
+function bytesToBase64(bytes) {
   let binString = '';
-  for (let i = 0; i < uint8array.length; i++) binString += String.fromCharCode(uint8array[i]);
+  const CHUNK = 8192;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binString += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
   return btoa(binString);
 }
-function decodeBase64Utf8(b64) {
+function base64ToBytes(b64) {
   const binString = atob(b64);
-  const uint8array = new Uint8Array(binString.length);
-  for (let i = 0; i < binString.length; i++) uint8array[i] = binString.charCodeAt(i);
-  return new TextDecoder().decode(uint8array);
+  const bytes = new Uint8Array(binString.length);
+  for (let i = 0; i < binString.length; i++) bytes[i] = binString.charCodeAt(i);
+  return bytes;
+}
+async function encodeTransferCode(str) {
+  const bytes = new TextEncoder().encode(str);
+  if (typeof CompressionStream === 'undefined') {
+    return 'U1:' + bytesToBase64(bytes);
+  }
+  const cs = new CompressionStream('gzip');
+  const writer = cs.writable.getWriter();
+  writer.write(bytes);
+  writer.close();
+  const compressed = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  return 'G1:' + bytesToBase64(compressed);
+}
+async function decodeTransferCode(code) {
+  const marker = code.slice(0, 3);
+  const body = code.slice(3);
+  if (marker === 'G1:') {
+    const ds = new DecompressionStream('gzip');
+    const writer = ds.writable.getWriter();
+    writer.write(base64ToBytes(body));
+    writer.close();
+    const bytes = new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    return new TextDecoder().decode(bytes);
+  }
+  if (marker === 'U1:') {
+    return new TextDecoder().decode(base64ToBytes(body));
+  }
+  // 旧形式（圧縮対応前に作成されたコード）: 無印のBase64
+  return new TextDecoder().decode(base64ToBytes(code));
 }
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -286,12 +330,15 @@ function renderExportSiteList() {
   }).join('');
 }
 
-function generateExportCode() {
+let lastExportCode = null;
+
+async function generateExportCode() {
   const statusEl = document.getElementById('exportStatus');
   const outputEl = document.getElementById('exportOutputArea');
   statusEl.className = 'status-msg';
-  statusEl.textContent = '';
+  statusEl.textContent = 'コードを作成中…';
   outputEl.innerHTML = '';
+  lastExportCode = null;
 
   const allKeys = getAllLocalStorageKeys();
   const selectedIds = [...document.querySelectorAll('#exportSiteList .site-checkbox:checked')].map(el => el.dataset.site);
@@ -317,21 +364,61 @@ function generateExportCode() {
     sites: selectedIds,
     data: dump
   };
+  const json = JSON.stringify(payload);
   let code;
   try {
-    code = encodeBase64Utf8(JSON.stringify(payload));
+    const uncompressedLen = bytesToBase64(new TextEncoder().encode(json)).length;
+    code = await encodeTransferCode(json);
+    var compressRate = uncompressedLen > 0 ? Math.max(0, Math.round((1 - code.length / uncompressedLen) * 100)) : 0;
   } catch (e) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = 'コードの生成に失敗しました。';
     return;
   }
+  lastExportCode = code;
 
   const siteLabels = selectedIds.map(id => (SITE_CATALOG.find(s => s.id === id) || {}).label || id).join('、');
   outputEl.innerHTML = `
-    <div class="status-msg">選択したサイト: ${escapeHtml(siteLabels)}（${Object.keys(dump).length}件のキー、約${Math.round(code.length / 1000)}千文字）</div>
-    <textarea id="codeOutput" class="code-textarea" readonly onclick="this.select()">${escapeHtml(code)}</textarea>
-    <button type="button" class="action-btn primary" onclick="copyExportCode()">📋 コードをコピー</button>
+    <div class="status-msg">選択したサイト: ${escapeHtml(siteLabels)}（${Object.keys(dump).length}件のキー、コード${code.length.toLocaleString()}文字${compressRate > 0 ? '　圧縮で約' + compressRate + '%短縮済み' : ''}）</div>
+    <button type="button" class="action-btn primary" onclick="downloadExportFile()">⬇️ ファイルとしてダウンロード（推奨）</button>
+    <button type="button" class="action-btn secondary" onclick="toggleExportTextarea()">📋 コードをテキストで表示してコピー</button>
+    <div id="exportTextareaArea"></div>
   `;
+  statusEl.className = 'status-msg';
+  statusEl.textContent = '';
+}
+
+function toggleExportTextarea() {
+  if (!lastExportCode) return;
+  const area = document.getElementById('exportTextareaArea');
+  if (area.dataset.open === '1') {
+    area.innerHTML = '';
+    area.dataset.open = '0';
+    return;
+  }
+  area.dataset.open = '1';
+  area.innerHTML = `
+    <textarea id="codeOutput" class="code-textarea" readonly onclick="this.select()">${escapeHtml(lastExportCode)}</textarea>
+    <button type="button" class="action-btn secondary" onclick="copyExportCode()">📋 コードをコピー</button>
+  `;
+}
+
+function downloadExportFile() {
+  if (!lastExportCode) return;
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  const blob = new Blob([lastExportCode], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sky-tools-transfer_${stamp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  const statusEl = document.getElementById('exportStatus');
+  statusEl.className = 'status-msg ok';
+  statusEl.textContent = 'ファイルをダウンロードしました。別の端末に送って「コードから復元」の「ファイルを選択」で読み込んでください。';
 }
 
 async function copyExportCode() {
@@ -354,7 +441,31 @@ async function copyExportCode() {
    ================================================================ */
 let pendingImportData = null;
 
-function loadCodeForImport() {
+async function loadCodeForImport() {
+  const code = document.getElementById('importCodeInput').value.trim();
+  if (!code) return;
+  await processImportCode(code);
+}
+
+function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const code = String(reader.result).trim();
+    document.getElementById('importCodeInput').value = code;
+    await processImportCode(code);
+  };
+  reader.onerror = () => {
+    const statusEl = document.getElementById('importStatus');
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = 'ファイルの読み込みに失敗しました。';
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function processImportCode(code) {
   const statusEl = document.getElementById('importStatus');
   const siteAreaEl = document.getElementById('importSiteArea');
   const confirmAreaEl = document.getElementById('importConfirmArea');
@@ -364,12 +475,9 @@ function loadCodeForImport() {
   confirmAreaEl.innerHTML = '';
   pendingImportData = null;
 
-  const code = document.getElementById('importCodeInput').value.trim();
-  if (!code) return;
-
   let payload;
   try {
-    payload = JSON.parse(decodeBase64Utf8(code));
+    payload = JSON.parse(await decodeTransferCode(code));
   } catch (e) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = 'コードの読み込みに失敗しました（コードの一部が欠けているか、正しくないコードです）。';
