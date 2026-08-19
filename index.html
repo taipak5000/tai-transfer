@@ -46,7 +46,8 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .nav-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-    .sidebar-toggle-btn {
+    .nav-actions { display: flex; align-items: center; gap: 8px; }
+    .sidebar-toggle-btn, .lang-toggle-btn {
       background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm);
       padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text);
       display: flex; align-items: center; gap: 6px; white-space: nowrap;
@@ -128,8 +129,11 @@
 <body>
 
 <nav>
-  <div class="nav-title">🔄 データ引継ぎ</div>
-  <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰ ツール</button>
+  <div class="nav-title" data-i18n="tools.dataTransfer"></div>
+  <div class="nav-actions">
+    <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">EN</button>
+    <button class="sidebar-toggle-btn" onclick="toggleSidebar()" data-i18n="sidebar.hamburgerToggle"></button>
+  </div>
 </nav>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
@@ -137,47 +141,37 @@
 <div class="app-layout">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <div class="sidebar-section-label">🔗 関連ツール</div>
+      <div class="sidebar-section-label" data-i18n="sidebar.relatedToolsLabel"></div>
       <button class="sidebar-close-btn" onclick="toggleSidebar()">✕</button>
     </div>
-    <a href="https://taipak5000.github.io/tai-item/" class="sidebar-nav-link">📁 アイテム所持管理</a>
-    <a href="https://taipak5000.github.io/tai-emote/" class="sidebar-nav-link">🎭 エモート所持率管理</a>
-    <a href="https://taipak5000.github.io/share/" class="sidebar-nav-link">📍 創作物管理ツール</a>
-    <a href="https://taipak5000.github.io/tai-nomacan/" class="sidebar-nav-link">🕯️ ノマキャン計算機</a>
-    <a href="https://taipak5000.github.io/star-candle/" class="sidebar-nav-link">🕯️ 星のキャンドル計算機</a>
-    <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link">✨ 精霊同行ツール</a>
-    <a href="https://taipak5000.github.io/tai-catalog/" class="sidebar-nav-link">🌳 精霊ツリー管理</a>
-    <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link">🪽 羽トラッカー</a>
-    <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool">🔄 データ引継ぎ</a>
+    <a href="https://taipak5000.github.io/tai-item/" class="sidebar-nav-link" data-i18n="tools.item"></a>
+    <a href="https://taipak5000.github.io/tai-emote/" class="sidebar-nav-link" data-i18n="tools.emote"></a>
+    <a href="https://taipak5000.github.io/share/" class="sidebar-nav-link" data-i18n="tools.share"></a>
+    <a href="https://taipak5000.github.io/tai-nomacan/" class="sidebar-nav-link" data-i18n="tools.taiNomacan"></a>
+    <a href="https://taipak5000.github.io/star-candle/" class="sidebar-nav-link" data-i18n="tools.starCandle"></a>
+    <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link" data-i18n="tools.companion"></a>
+    <a href="https://taipak5000.github.io/tai-catalog/" class="sidebar-nav-link" data-i18n="tools.spiritCatalog"></a>
+    <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link" data-i18n="tools.wings"></a>
+    <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool" data-i18n="tools.dataTransfer"></a>
   </aside>
 
   <div class="wrap">
-    <p class="sec-label">📤 引き継ぎコードを作成</p>
+    <p class="sec-label" data-i18n="page.sectionExport"></p>
     <div class="card">
-      <div class="hint">
-        Dropbox等の外部サービスを使わず、ファイルまたはコピー&amp;ペーストで端末間のデータを引き継げます。
-        引き継ぎたいサイトだけを選んでコードを作成し、別の端末の「コードから復元」に読み込んでください。
-        コードは自動で圧縮されますが、長くなりやすいので「ファイルとしてダウンロード」がおすすめです
-        （AirDropやメッセージアプリへの添付で送れます）。
-        このブラウザに保存されているデータが対象で、taipak5000.github.io系ツール共通のプロフィール（保存枠）は
-        常に一緒に引き継がれます。
-      </div>
+      <div class="hint" data-i18n="page.exportHint"></div>
       <div id="exportSiteList"></div>
-      <button type="button" class="action-btn primary" onclick="generateExportCode()">📋 選んだサイトのコードを作成</button>
+      <button type="button" class="action-btn primary" onclick="generateExportCode()" data-i18n="page.createCodeBtn"></button>
       <div id="exportOutputArea"></div>
       <div id="exportStatus" class="status-msg"></div>
     </div>
 
-    <p class="sec-label">📥 コードから復元</p>
+    <p class="sec-label" data-i18n="page.sectionImport"></p>
     <div class="card">
-      <div class="hint">
-        別の端末で作成した引き継ぎコードを、ファイルから読み込むか、ここに貼り付けてください。
-        コードに含まれるサイトが自動で検出され、その中から復元したいものだけを選べます。
-      </div>
+      <div class="hint" data-i18n="page.importHint"></div>
       <input type="file" id="importFileInput" accept=".txt,.json" onchange="handleImportFile(event)">
-      <div class="hint" style="margin:10px 0 6px;">またはコードを直接貼り付け：</div>
-      <textarea id="importCodeInput" class="code-textarea" placeholder="ここに引き継ぎコードを貼り付け"></textarea>
-      <button type="button" class="action-btn secondary" onclick="loadCodeForImport()">🔍 コードを読み込む</button>
+      <div class="hint" style="margin:10px 0 6px;" data-i18n="page.pasteHint"></div>
+      <textarea id="importCodeInput" class="code-textarea" placeholder="ここに引き継ぎコードを貼り付け" data-i18n-placeholder="page.pastePlaceholder"></textarea>
+      <button type="button" class="action-btn secondary" onclick="loadCodeForImport()" data-i18n="page.loadCodeBtn"></button>
       <div id="importSiteArea"></div>
       <div id="importConfirmArea"></div>
       <div id="importStatus" class="status-msg"></div>
@@ -186,13 +180,148 @@
 </div>
 
 <footer>
-  このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。<br>
-  作成・ご意見: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／
-  <a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">リクエストフォーム</a><br>
-  <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer">⚙️ 設定・更新情報・クレジット・プライバシーポリシー</a>
+  <span data-i18n="footer.disclaimer"></span><br>
+  <span data-i18n="footer.creditLabel"></span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／
+  <a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" data-i18n="footer.requestForm"></a><br>
+  <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer" data-i18n="footer.infoLink"></a>
 </footer>
 
 <script>
+/* ================================================================
+   多言語対応（i18n）
+   sky_app_lang は taipak5000.github.io 系ツール共通のプレーンな
+   グローバルキー（プロフィールごとの nsKey() 対象外。sky_app_theme と同じ扱い）。
+   ================================================================ */
+const LANG_KEY = 'sky_app_lang';
+let LANG = localStorage.getItem(LANG_KEY) || 'ja';
+
+const I18N = {
+  ja: {
+    'page.title': 'データ引継ぎ - Sky所持率管理',
+    'tools.item': '🗂️ アイテム所持管理',
+    'tools.emote': '🎭 エモート所持率管理',
+    'tools.share': '📍 創作物管理ツール',
+    'tools.taiNomacan': '🕯️ ノマキャン計算機',
+    'tools.starCandle': '🕯️ 星のキャンドル計算機',
+    'tools.companion': '✨ 精霊同行ツール',
+    'tools.spiritCatalog': '🌳 精霊ツリー管理',
+    'tools.wings': '🪽 羽トラッカー',
+    'tools.dataTransfer': '🔄 データ引継ぎ',
+    'sidebar.hamburgerToggle': '☰ ツール',
+    'sidebar.relatedToolsLabel': '🔗 関連ツール',
+    'page.sectionExport': '📤 引き継ぎコードを作成',
+    'page.sectionImport': '📥 コードから復元',
+    'page.exportHint': 'Dropbox等の外部サービスを使わず、ファイルまたはコピー&ペーストで端末間のデータを引き継げます。引き継ぎたいサイトだけを選んでコードを作成し、別の端末の「コードから復元」に読み込んでください。コードは自動で圧縮されますが、長くなりやすいので「ファイルとしてダウンロード」がおすすめです（AirDropやメッセージアプリへの添付で送れます）。このブラウザに保存されているデータが対象で、taipak5000.github.io系ツール共通のプロフィール（保存枠）は常に一緒に引き継がれます。',
+    'page.importHint': '別の端末で作成した引き継ぎコードを、ファイルから読み込むか、ここに貼り付けてください。コードに含まれるサイトが自動で検出され、その中から復元したいものだけを選べます。',
+    'page.pasteHint': 'またはコードを直接貼り付け：',
+    'page.createCodeBtn': '📋 選んだサイトのコードを作成',
+    'page.loadCodeBtn': '🔍 コードを読み込む',
+    'page.pastePlaceholder': 'ここに引き継ぎコードを貼り付け',
+    'footer.disclaimer': 'このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。',
+    'footer.creditLabel': '作成・ご意見:',
+    'footer.requestForm': 'リクエストフォーム',
+    'footer.infoLink': '⚙️ 設定・更新情報・クレジット・プライバシーポリシー',
+    'dyn.creatingCode': 'コードを作成中…',
+    'dyn.selectAtLeastOneSite': '少なくとも1つサイトを選んでください。',
+    'dyn.codeGenFailed': 'コードの生成に失敗しました。',
+    'dyn.keysCount': '{n}件',
+    'dyn.exportSummary': '選択したサイト: {sites}（{count}件のキー、コード{length}文字{compressNote}）',
+    'dyn.compressNote': '　圧縮で約{rate}%短縮済み',
+    'dyn.downloadBtn': '⬇️ ファイルとしてダウンロード（推奨）',
+    'dyn.showCodeBtn': '📋 コードをテキストで表示してコピー',
+    'dyn.copyCodeBtn': '📋 コードをコピー',
+    'dyn.downloadSuccess': 'ファイルをダウンロードしました。別の端末に送って「コードから復元」の「ファイルを選択」で読み込んでください。',
+    'dyn.copySuccess': 'コピーしました。別の端末の「コードから復元」に貼り付けてください。',
+    'dyn.copyFailed': 'コピーに失敗しました。コードが選択された状態なので、手動でコピーしてください。',
+    'dyn.fileReadFailed': 'ファイルの読み込みに失敗しました。',
+    'dyn.codeLoadFailed': 'コードの読み込みに失敗しました（コードの一部が欠けているか、正しくないコードです）。',
+    'dyn.notThisToolCode': 'このツールで作成したコードではないようです。',
+    'dyn.noMatchingSiteData': 'コードの中に、対応するサイトのデータが見つかりませんでした。',
+    'dyn.selectSitesToRestore': '復元するサイトを選んでください：',
+    'dyn.restoreBtn': '✅ 選んだサイトを復元する',
+    'dyn.restoreSuccess': '{n}件のキーを復元しました。'
+  },
+  en: {
+    'page.title': 'Data Transfer - Sky Collection Tracker',
+    'tools.item': '🗂️ Item Collection',
+    'tools.emote': '🎭 Emote Collection',
+    'tools.share': '📍 Creation Manager',
+    'tools.taiNomacan': '🕯️ Nomacan Calculator',
+    'tools.starCandle': '🕯️ Star Candle Calculator',
+    'tools.companion': '✨ Spirit Companion Tool',
+    'tools.spiritCatalog': '🌳 Spirit Tree Manager',
+    'tools.wings': '🪽 Wing Tracker',
+    'tools.dataTransfer': '🔄 Data Transfer',
+    'sidebar.hamburgerToggle': '☰ Tools',
+    'sidebar.relatedToolsLabel': '🔗 Related Tools',
+    'page.sectionExport': '📤 Create a Transfer Code',
+    'page.sectionImport': '📥 Restore from a Code',
+    'page.exportHint': "You can transfer data between devices using a file or copy & paste, without any external service like Dropbox. Select only the sites you want to bring over to generate a code, then load it into \"Restore from a Code\" on another device. The code is compressed automatically, but it can still get long, so downloading it as a file is recommended (you can send it via AirDrop or as a message attachment). This applies to data stored in this browser — the profiles (save slots) shared across taipak5000.github.io tools are always carried over together with it.",
+    'page.importHint': 'Load the transfer code created on another device from a file, or paste it below. The sites contained in the code are detected automatically, and you can choose which ones to restore.',
+    'page.pasteHint': 'Or paste the code directly:',
+    'page.createCodeBtn': '📋 Create Code for Selected Sites',
+    'page.loadCodeBtn': '🔍 Load Code',
+    'page.pastePlaceholder': 'Paste your transfer code here',
+    'footer.disclaimer': 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.',
+    'footer.creditLabel': 'Created by / feedback:',
+    'footer.requestForm': 'Request form',
+    'footer.infoLink': "⚙️ Settings / What's New / Credits / Privacy Policy",
+    'dyn.creatingCode': 'Creating code…',
+    'dyn.selectAtLeastOneSite': 'Please select at least one site.',
+    'dyn.codeGenFailed': 'Failed to generate the code.',
+    'dyn.keysCount': '{n} keys',
+    'dyn.exportSummary': 'Selected sites: {sites} ({count} keys, code is {length} characters{compressNote})',
+    'dyn.compressNote': ' · Compressed by about {rate}%',
+    'dyn.downloadBtn': '⬇️ Download as File (Recommended)',
+    'dyn.showCodeBtn': '📋 Show Code as Text to Copy',
+    'dyn.copyCodeBtn': '📋 Copy Code',
+    'dyn.downloadSuccess': 'File downloaded. Send it to another device and load it using "Choose File" under "Restore from a Code".',
+    'dyn.copySuccess': 'Copied. Paste it into "Restore from a Code" on another device.',
+    'dyn.copyFailed': 'Copy failed. The code is selected, so please copy it manually.',
+    'dyn.fileReadFailed': 'Failed to read the file.',
+    'dyn.codeLoadFailed': 'Failed to load the code (it may be incomplete or invalid).',
+    'dyn.notThisToolCode': "This doesn't look like a code created by this tool.",
+    'dyn.noMatchingSiteData': 'No supported site data was found in this code.',
+    'dyn.selectSitesToRestore': 'Select the sites to restore:',
+    'dyn.restoreBtn': '✅ Restore Selected Sites',
+    'dyn.restoreSuccess': 'Restored {n} keys.'
+  }
+};
+
+function t(key, vars) {
+  const dict = I18N[LANG] || I18N.ja;
+  let str = dict[key] !== undefined ? dict[key] : (I18N.ja[key] !== undefined ? I18N.ja[key] : key);
+  if (vars) {
+    Object.keys(vars).forEach(k => { str = str.split('{' + k + '}').join(vars[k]); });
+  }
+  return str;
+}
+
+function applyI18n() {
+  document.documentElement.lang = LANG;
+  document.title = t('page.title');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.getAttribute('data-i18n-title'));
+  });
+  const langBtn = document.getElementById('langToggleBtn');
+  if (langBtn) langBtn.textContent = LANG === 'ja' ? 'EN' : '日本語';
+}
+
+function toggleLang() {
+  LANG = LANG === 'ja' ? 'en' : 'ja';
+  localStorage.setItem(LANG_KEY, LANG);
+  applyI18n();
+  renderExportSiteList();
+  renderExportOutput();
+  renderImportSiteArea();
+}
+
 /* ================================================================
    サイドバー開閉
    ================================================================ */
@@ -210,39 +339,43 @@ function toggleSidebar() {
    その全プロフィール分をまとめて対象にする。
    ================================================================ */
 const SITE_CATALOG = [
-  { id: 'item', label: '🗂️ アイテム所持管理', namespaced: true, keys: [
+  { id: 'item', label: '🗂️ アイテム所持管理', labelEn: '🗂️ Item Collection', namespaced: true, keys: [
     'gameItems_outfit', 'gameItems_shoes', 'gameItems_mask', 'gameItems_face_accessory', 'gameItems_necklace',
     'gameItems_hairstyle', 'gameItems_hair_accessory', 'gameItems_head_accessory', 'gameItems_cape',
     'gameItems_portable_item', 'gameItems_large_placeable', 'gameItems_small_placeable',
     'seasonAcquireMode_v1', 'shareCustomize_v1', 'favShareStyle_v1', 'favShareTheme_v1',
     'gameItems_viewMode', 'gameItems_gridCols'
   ]},
-  { id: 'wings', label: '🪽 羽トラッカー', namespaced: true, keys: [
+  { id: 'wings', label: '🪽 羽トラッカー', labelEn: '🪽 Wing Tracker', namespaced: true, keys: [
     'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1'
   ]},
-  { id: 'companion', label: '✨ 精霊同行ツール', namespaced: true, keys: [
+  { id: 'companion', label: '✨ 精霊同行ツール', labelEn: '✨ Spirit Companion Tool', namespaced: true, keys: [
     'sky_companion_v4_data', 'sky_companion_records_meta_v1'
   ]},
-  { id: 'star-candle', label: '🕯️ 星のキャンドル計算機', namespaced: true, keys: [
+  { id: 'star-candle', label: '🕯️ 星のキャンドル計算機', labelEn: '🕯️ Star Candle Calculator', namespaced: true, keys: [
     'skyStarCandleCalc_v1', 'skyStarCandleCalc_checkedDays_v1', 'skyStarCandleCalc_history_v1'
   ]},
-  { id: 'share', label: '📍 創作物管理ツール', namespaced: true, keys: [
+  { id: 'share', label: '📍 創作物管理ツール', labelEn: '📍 Creation Manager', namespaced: true, keys: [
     'sky_tracker_storage'
   ]},
-  { id: 'emote', label: '🎭 エモート所持率管理', namespaced: true, keys: [
+  { id: 'emote', label: '🎭 エモート所持率管理', labelEn: '🎭 Emote Collection', namespaced: true, keys: [
     'emoteOwned_v1', 'emoteShareCustomize_v1', 'emoteViewMode_v1'
   ]},
-  { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', namespaced: true, keys: [
+  { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', labelEn: '🌳 Spirit Tree Manager', namespaced: true, keys: [
     'spiritCatalogUnlocked_v1'
   ]},
-  { id: 'currency', label: '💰 所持通貨（共通）', namespaced: true, keys: [
+  { id: 'currency', label: '💰 所持通貨（共通）', labelEn: '💰 Owned Currency (Shared)', namespaced: true, keys: [
     'wishOwnCurrency', 'skyCurrencyExtra_v1'
   ]},
-  { id: 'skyzztai', label: '🕯️ ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', namespaced: false, keys: [
+  { id: 'skyzztai', label: '🕯️ ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', labelEn: '🕯️ Normal Candle Calculator (Legacy · Realm/Area Info)', namespaced: false, keys: [
     'sky_tracker_storage_v3', 'sky_shard_sync_date', 'sky_skill_answered', 'sky_skill_level_key',
     'sky_current_time_mult', 'sky_area_view_mode', 'sky_atlas_bg_opacity'
   ]},
 ];
+
+function siteLabel(site) {
+  return LANG === 'en' ? site.labelEn : site.label;
+}
 // プロフィール（保存枠）そのものの登録情報。どのサイトを選んでも常に一緒に引き継ぐ
 // （個別データだけ引き継いでプロフィール一覧が無いと、切り替え表示がおかしくなるため）。
 const PROFILE_REGISTRY_KEYS = ['skyProfiles_v1', 'skyActiveProfile_v1'];
@@ -325,27 +458,31 @@ function renderExportSiteList() {
     return `
       <label class="site-opt ${hasData ? '' : 'no-data'}">
         <input type="checkbox" class="site-checkbox" data-site="${site.id}" ${hasData ? 'checked' : ''}>
-        <span class="site-opt-label">${site.label}</span>
-        <span class="site-opt-count">${matched.length}件</span>
+        <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
+        <span class="site-opt-count">${t('dyn.keysCount', { n: matched.length })}</span>
       </label>`;
   }).join('');
 }
 
 let lastExportCode = null;
+let lastExportResult = null; // { selectedIds, keyCount, codeLength, compressRate }
+let exportTextareaOpen = false;
 
 async function generateExportCode() {
   const statusEl = document.getElementById('exportStatus');
   const outputEl = document.getElementById('exportOutputArea');
   statusEl.className = 'status-msg';
-  statusEl.textContent = 'コードを作成中…';
+  statusEl.textContent = t('dyn.creatingCode');
   outputEl.innerHTML = '';
   lastExportCode = null;
+  lastExportResult = null;
+  exportTextareaOpen = false;
 
   const allKeys = getAllLocalStorageKeys();
   const selectedIds = [...document.querySelectorAll('#exportSiteList .site-checkbox:checked')].map(el => el.dataset.site);
   if (selectedIds.length === 0) {
     statusEl.className = 'status-msg err';
-    statusEl.textContent = '少なくとも1つサイトを選んでください。';
+    statusEl.textContent = t('dyn.selectAtLeastOneSite');
     return;
   }
 
@@ -366,41 +503,56 @@ async function generateExportCode() {
     data: dump
   };
   const json = JSON.stringify(payload);
-  let code;
+  let code, compressRate;
   try {
     const uncompressedLen = bytesToBase64(new TextEncoder().encode(json)).length;
     code = await encodeTransferCode(json);
-    var compressRate = uncompressedLen > 0 ? Math.max(0, Math.round((1 - code.length / uncompressedLen) * 100)) : 0;
+    compressRate = uncompressedLen > 0 ? Math.max(0, Math.round((1 - code.length / uncompressedLen) * 100)) : 0;
   } catch (e) {
     statusEl.className = 'status-msg err';
-    statusEl.textContent = 'コードの生成に失敗しました。';
+    statusEl.textContent = t('dyn.codeGenFailed');
     return;
   }
   lastExportCode = code;
+  lastExportResult = { selectedIds, keyCount: Object.keys(dump).length, codeLength: code.length, compressRate };
 
-  const siteLabels = selectedIds.map(id => (SITE_CATALOG.find(s => s.id === id) || {}).label || id).join('、');
-  outputEl.innerHTML = `
-    <div class="status-msg">選択したサイト: ${escapeHtml(siteLabels)}（${Object.keys(dump).length}件のキー、コード${code.length.toLocaleString()}文字${compressRate > 0 ? '　圧縮で約' + compressRate + '%短縮済み' : ''}）</div>
-    <button type="button" class="action-btn primary" onclick="downloadExportFile()">⬇️ ファイルとしてダウンロード（推奨）</button>
-    <button type="button" class="action-btn secondary" onclick="toggleExportTextarea()">📋 コードをテキストで表示してコピー</button>
-    <div id="exportTextareaArea"></div>
-  `;
+  renderExportOutput();
   statusEl.className = 'status-msg';
   statusEl.textContent = '';
 }
 
+function renderExportOutput() {
+  const outputEl = document.getElementById('exportOutputArea');
+  if (!lastExportResult) { outputEl.innerHTML = ''; return; }
+  const { selectedIds, keyCount, codeLength, compressRate } = lastExportResult;
+  const sep = LANG === 'en' ? ', ' : '、';
+  const siteLabels = selectedIds.map(id => {
+    const site = SITE_CATALOG.find(s => s.id === id);
+    return site ? siteLabel(site) : id;
+  }).join(sep);
+  const compressNote = compressRate > 0 ? t('dyn.compressNote', { rate: compressRate }) : '';
+  outputEl.innerHTML = `
+    <div class="status-msg">${t('dyn.exportSummary', { sites: escapeHtml(siteLabels), count: keyCount, length: codeLength.toLocaleString(), compressNote })}</div>
+    <button type="button" class="action-btn primary" onclick="downloadExportFile()">${t('dyn.downloadBtn')}</button>
+    <button type="button" class="action-btn secondary" onclick="toggleExportTextarea()">${t('dyn.showCodeBtn')}</button>
+    <div id="exportTextareaArea"></div>
+  `;
+  renderExportTextareaArea();
+}
+
 function toggleExportTextarea() {
   if (!lastExportCode) return;
+  exportTextareaOpen = !exportTextareaOpen;
+  renderExportTextareaArea();
+}
+
+function renderExportTextareaArea() {
   const area = document.getElementById('exportTextareaArea');
-  if (area.dataset.open === '1') {
-    area.innerHTML = '';
-    area.dataset.open = '0';
-    return;
-  }
-  area.dataset.open = '1';
+  if (!area) return;
+  if (!exportTextareaOpen || !lastExportCode) { area.innerHTML = ''; return; }
   area.innerHTML = `
     <textarea id="codeOutput" class="code-textarea" readonly onclick="this.select()">${escapeHtml(lastExportCode)}</textarea>
-    <button type="button" class="action-btn secondary" onclick="copyExportCode()">📋 コードをコピー</button>
+    <button type="button" class="action-btn secondary" onclick="copyExportCode()">${t('dyn.copyCodeBtn')}</button>
   `;
 }
 
@@ -419,7 +571,7 @@ function downloadExportFile() {
   URL.revokeObjectURL(url);
   const statusEl = document.getElementById('exportStatus');
   statusEl.className = 'status-msg ok';
-  statusEl.textContent = 'ファイルをダウンロードしました。別の端末に送って「コードから復元」の「ファイルを選択」で読み込んでください。';
+  statusEl.textContent = t('dyn.downloadSuccess');
 }
 
 async function copyExportCode() {
@@ -430,10 +582,10 @@ async function copyExportCode() {
   try {
     await navigator.clipboard.writeText(ta.value);
     statusEl.className = 'status-msg ok';
-    statusEl.textContent = 'コピーしました。別の端末の「コードから復元」に貼り付けてください。';
+    statusEl.textContent = t('dyn.copySuccess');
   } catch (e) {
     statusEl.className = 'status-msg err';
-    statusEl.textContent = 'コピーに失敗しました。コードが選択された状態なので、手動でコピーしてください。';
+    statusEl.textContent = t('dyn.copyFailed');
   }
 }
 
@@ -441,6 +593,8 @@ async function copyExportCode() {
    📥 インポート（コード読み込み → サイト選択 → 復元）
    ================================================================ */
 let pendingImportData = null;
+let lastImportDetected = null; // array of matched SITE_CATALOG entries
+let lastImportDataKeys = null;
 
 async function loadCodeForImport() {
   const code = document.getElementById('importCodeInput').value.trim();
@@ -460,7 +614,7 @@ function handleImportFile(event) {
   reader.onerror = () => {
     const statusEl = document.getElementById('importStatus');
     statusEl.className = 'status-msg err';
-    statusEl.textContent = 'ファイルの読み込みに失敗しました。';
+    statusEl.textContent = t('dyn.fileReadFailed');
   };
   reader.readAsText(file);
   event.target.value = '';
@@ -468,26 +622,25 @@ function handleImportFile(event) {
 
 async function processImportCode(code) {
   const statusEl = document.getElementById('importStatus');
-  const siteAreaEl = document.getElementById('importSiteArea');
-  const confirmAreaEl = document.getElementById('importConfirmArea');
   statusEl.className = 'status-msg';
   statusEl.textContent = '';
-  siteAreaEl.innerHTML = '';
-  confirmAreaEl.innerHTML = '';
   pendingImportData = null;
+  lastImportDetected = null;
+  lastImportDataKeys = null;
+  renderImportSiteArea();
 
   let payload;
   try {
     payload = JSON.parse(await decodeTransferCode(code));
   } catch (e) {
     statusEl.className = 'status-msg err';
-    statusEl.textContent = 'コードの読み込みに失敗しました（コードの一部が欠けているか、正しくないコードです）。';
+    statusEl.textContent = t('dyn.codeLoadFailed');
     return;
   }
   const data = payload && payload.data && typeof payload.data === 'object' ? payload.data : null;
   if (!data) {
     statusEl.className = 'status-msg err';
-    statusEl.textContent = 'このツールで作成したコードではないようです。';
+    statusEl.textContent = t('dyn.notThisToolCode');
     return;
   }
 
@@ -496,21 +649,34 @@ async function processImportCode(code) {
   const detected = SITE_CATALOG.filter(site => matchKeysForSite(site, dataKeys).length > 0);
   if (detected.length === 0) {
     statusEl.className = 'status-msg err';
-    statusEl.textContent = 'コードの中に、対応するサイトのデータが見つかりませんでした。';
+    statusEl.textContent = t('dyn.noMatchingSiteData');
     return;
   }
 
-  siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">復元するサイトを選んでください：</div>` +
-    detected.map(site => {
-      const matched = matchKeysForSite(site, dataKeys);
+  lastImportDetected = detected;
+  lastImportDataKeys = dataKeys;
+  renderImportSiteArea();
+}
+
+function renderImportSiteArea() {
+  const siteAreaEl = document.getElementById('importSiteArea');
+  const confirmAreaEl = document.getElementById('importConfirmArea');
+  if (!lastImportDetected || !lastImportDataKeys) {
+    siteAreaEl.innerHTML = '';
+    confirmAreaEl.innerHTML = '';
+    return;
+  }
+  siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
+    lastImportDetected.map(site => {
+      const matched = matchKeysForSite(site, lastImportDataKeys);
       return `
         <label class="site-opt">
           <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked>
-          <span class="site-opt-label">${site.label}</span>
-          <span class="site-opt-count">${matched.length}件</span>
+          <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
+          <span class="site-opt-count">${t('dyn.keysCount', { n: matched.length })}</span>
         </label>`;
     }).join('');
-  confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="confirmImport()">✅ 選んだサイトを復元する</button>`;
+  confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="confirmImport()">${t('dyn.restoreBtn')}</button>`;
 }
 
 function confirmImport() {
@@ -520,7 +686,7 @@ function confirmImport() {
   const selectedIds = [...document.querySelectorAll('#importSiteArea .import-site-checkbox:checked')].map(el => el.dataset.site);
   if (selectedIds.length === 0) {
     statusEl.className = 'status-msg err';
-    statusEl.textContent = '少なくとも1つサイトを選んでください。';
+    statusEl.textContent = t('dyn.selectAtLeastOneSite');
     return;
   }
 
@@ -534,8 +700,10 @@ function confirmImport() {
   });
 
   statusEl.className = 'status-msg ok';
-  statusEl.textContent = `${count}件のキーを復元しました。`;
+  statusEl.textContent = t('dyn.restoreSuccess', { n: count });
   pendingImportData = null;
+  lastImportDetected = null;
+  lastImportDataKeys = null;
   document.getElementById('importSiteArea').innerHTML = '';
   document.getElementById('importConfirmArea').innerHTML = '';
   document.getElementById('importCodeInput').value = '';
@@ -544,6 +712,7 @@ function confirmImport() {
 /* ================================================================
    初期化
    ================================================================ */
+applyI18n();
 renderExportSiteList();
 </script>
 </body>
