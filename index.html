@@ -3,6 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    /* 🌙 ダーク/ライト表示の初期反映（Vue等の描画前に同期実行し、意図しない
+       配色でのちらつき「FOUC」を防止する）。sky_app_theme は taipak5000.github.io
+       系ツール共通のプレーンなグローバルキー（sky_app_lang と同じ扱い）。 */
+    (function () {
+      try {
+        var saved = localStorage.getItem('sky_app_theme');
+        var isDark = saved ? (saved === 'dark') : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,6 +43,21 @@
       --r-sm:      10px;
     }
 
+    /* 🌙 ダークモード用のカラー上書き（:root と同等の詳細度なので、ソース順で
+       後に書くことで上書きされる）。アクセントの色相はライト版から変えず、
+       --purple-d と --purple-bg のみ、暗い背景でも読みやすいよう調整している。 */
+    [data-theme="dark"] {
+      --bg:        #000000;
+      --card:      #1C1C1E;
+      --sep:       rgba(255,255,255,0.14);
+      --purple-d:  #C77DFF;
+      --purple-bg: rgba(175,82,222,0.22);
+      --text:      #F2F2F7;
+      --text-2:    #98989D;
+      --text-3:    #636366;
+    }
+    [data-theme="dark"] nav { background: rgba(0,0,0,0.75); }
+
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     a { text-decoration:none; color:inherit; -webkit-tap-highlight-color:transparent; }
     button { cursor:pointer; border:none; background:none; font-family:inherit; }
@@ -47,7 +76,7 @@
     }
     .nav-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
     .nav-actions { display: flex; align-items: center; gap: 8px; }
-    .sidebar-toggle-btn, .lang-toggle-btn {
+    .sidebar-toggle-btn, .lang-toggle-btn, .settings-toggle-btn {
       background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm);
       padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text);
       display: flex; align-items: center; gap: 6px; white-space: nowrap;
@@ -124,6 +153,48 @@
 
     footer { text-align: center; font-size: 11.5px; color: var(--text-3); padding: 34px 16px 12px; line-height: 1.9; }
     footer a { color: var(--purple-d); text-decoration: none; }
+
+    /* ⚙️ 表示設定モーダル（ダークモード切替・キーボードショートカット設定） */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 600;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-card {
+      width: 100%; max-width: 360px; max-height: 80vh; overflow-y: auto;
+      background: var(--card); border-radius: var(--r); padding: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box;
+    }
+    .modal-card h3 {
+      margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .modal-close-x { background: none; border: none; font-size: 20px; color: var(--text-2); cursor: pointer; line-height: 1; padding: 0; }
+    .settings-section { margin-top: 16px; }
+    .settings-section:first-of-type { margin-top: 0; }
+    .settings-section-label {
+      font-size: 12px; font-weight: 700; color: var(--text-2); text-transform: uppercase;
+      letter-spacing: 0.4px; margin: 0 0 8px;
+    }
+    .settings-row {
+      display: flex; align-items: center; gap: 8px; padding: 9px 11px; background: var(--bg);
+      border-radius: var(--r-sm); margin-bottom: 6px; font-size: 13.5px; color: var(--text);
+    }
+    .settings-row:last-child { margin-bottom: 0; }
+    .settings-row-text { flex: 1; min-width: 0; }
+    .theme-toggle-btn {
+      background: var(--card); border: 1px solid var(--sep); color: var(--text);
+      padding: 6px 12px; font-size: 12px; border-radius: 20px; cursor: pointer; font-weight: 700; white-space: nowrap;
+    }
+    .settings-key {
+      flex-shrink: 0; min-width: 30px; text-align: center; font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px;
+      background: var(--card); border: 1px solid var(--sep); border-radius: 5px; padding: 2px 6px; color: var(--text);
+    }
+    .settings-close-btn {
+      display: block; width: 100%; margin-top: 16px; background: var(--bg); border: 1px solid var(--sep);
+      color: var(--text); border-radius: var(--r-sm); padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -132,6 +203,7 @@
   <div class="nav-title" data-i18n="tools.dataTransfer"></div>
   <div class="nav-actions">
     <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">EN</button>
+    <button class="settings-toggle-btn" onclick="settingsOpen()" data-i18n-title="settings.entryBtnTitle">⚙️</button>
     <button class="sidebar-toggle-btn" onclick="toggleSidebar()" data-i18n="sidebar.hamburgerToggle"></button>
   </div>
 </nav>
@@ -179,6 +251,47 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="settingsModal" onclick="if (event.target === this) settingsClose();">
+  <div class="modal-card">
+    <h3>
+      <span data-i18n="settings.title"></span>
+      <button type="button" class="modal-close-x" onclick="settingsClose()" aria-label="Close">✕</button>
+    </h3>
+
+    <div class="settings-section">
+      <p class="settings-section-label" data-i18n="settings.displayLabel"></p>
+      <div class="settings-row">
+        <span>🌙</span>
+        <span class="settings-row-text" data-i18n="settings.darkModeLabel"></span>
+        <button type="button" class="theme-toggle-btn" id="settingsThemeBtn" onclick="toggleTheme()"></button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <p class="settings-section-label" data-i18n="settings.shortcutsLabel"></p>
+      <div class="settings-row">
+        <span>⌨️</span>
+        <span class="settings-row-text" data-i18n="settings.shortcutsEnableLabel"></span>
+        <input type="checkbox" id="shortcutsCheckbox" onchange="onShortcutsCheckboxChange()" style="width:19px; height:19px; flex-shrink:0; cursor:pointer; accent-color:var(--purple);">
+      </div>
+      <div class="settings-row">
+        <span class="settings-key">?</span>
+        <span class="settings-row-text" data-i18n="settings.shortcutOpen"></span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-key">D</span>
+        <span class="settings-row-text" data-i18n="settings.shortcutTheme"></span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-key">Esc</span>
+        <span class="settings-row-text" data-i18n="settings.shortcutEscape"></span>
+      </div>
+    </div>
+
+    <button type="button" class="settings-close-btn" onclick="settingsClose()" data-i18n="settings.closeBtn"></button>
+  </div>
+</div>
+
 <footer>
   <span data-i18n="footer.disclaimer"></span><br>
   <span data-i18n="footer.creditLabel"></span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／
@@ -221,6 +334,18 @@ const I18N = {
     'footer.creditLabel': '作成・ご意見:',
     'footer.requestForm': 'リクエストフォーム',
     'footer.infoLink': '⚙️ 設定・更新情報・クレジット・プライバシーポリシー',
+    'settings.entryBtnTitle': '⚙️ 表示設定',
+    'settings.title': '⚙️ 表示設定',
+    'settings.displayLabel': '🌙 表示',
+    'settings.darkModeLabel': 'ダークモード',
+    'settings.themeDark': '🌙 ダーク',
+    'settings.themeLight': '☀️ ライト',
+    'settings.shortcutsLabel': '⌨️ キーボードショートカット',
+    'settings.shortcutsEnableLabel': 'ショートカットを有効にする',
+    'settings.shortcutOpen': 'この設定を開く',
+    'settings.shortcutTheme': 'ダークモード切替',
+    'settings.shortcutEscape': '開いているウィンドウを閉じる',
+    'settings.closeBtn': '閉じる',
     'dyn.creatingCode': 'コードを作成中…',
     'dyn.selectAtLeastOneSite': '少なくとも1つサイトを選んでください。',
     'dyn.codeGenFailed': 'コードの生成に失敗しました。',
@@ -266,6 +391,18 @@ const I18N = {
     'footer.creditLabel': 'Created by / feedback:',
     'footer.requestForm': 'Request form',
     'footer.infoLink': "⚙️ Settings / What's New / Credits / Privacy Policy",
+    'settings.entryBtnTitle': '⚙️ Display Settings',
+    'settings.title': '⚙️ Display Settings',
+    'settings.displayLabel': '🌙 Display',
+    'settings.darkModeLabel': 'Dark Mode',
+    'settings.themeDark': '🌙 Dark',
+    'settings.themeLight': '☀️ Light',
+    'settings.shortcutsLabel': '⌨️ Keyboard Shortcuts',
+    'settings.shortcutsEnableLabel': 'Enable keyboard shortcuts',
+    'settings.shortcutOpen': 'Open this settings panel',
+    'settings.shortcutTheme': 'Toggle dark mode',
+    'settings.shortcutEscape': 'Close the open window',
+    'settings.closeBtn': 'Close',
     'dyn.creatingCode': 'Creating code…',
     'dyn.selectAtLeastOneSite': 'Please select at least one site.',
     'dyn.codeGenFailed': 'Failed to generate the code.',
@@ -317,10 +454,90 @@ function toggleLang() {
   LANG = LANG === 'ja' ? 'en' : 'ja';
   localStorage.setItem(LANG_KEY, LANG);
   applyI18n();
+  applyThemeToDOM(); // ダーク/ライト切替ボタンのラベル文言も、言語切替時に更新する
   renderExportSiteList();
   renderExportOutput();
   renderImportSiteArea();
 }
+
+/* ================================================================
+   ⚙️ 表示設定（ダークモード・キーボードショートカット）
+   sky_app_theme / sky_shortcuts_enabled は taipak5000.github.io 系
+   ツール共通のプレーンなグローバルキー（プロフィールごとの nsKey() 対象外。
+   sky_app_lang と同じ扱い）。
+   ================================================================ */
+const THEME_KEY = 'sky_app_theme';
+const SHORTCUTS_KEY = 'sky_shortcuts_enabled';
+// <head>の同期スクリプトが既に data-theme 属性を設定済みなので、その値を初期状態として読む
+let isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+
+function applyThemeToDOM() {
+  document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  const btn = document.getElementById('settingsThemeBtn');
+  if (btn) btn.textContent = t(isDarkMode ? 'settings.themeDark' : 'settings.themeLight');
+}
+
+function toggleTheme() {
+  isDarkMode = !isDarkMode;
+  applyThemeToDOM();
+  try {
+    localStorage.setItem(THEME_KEY, isDarkMode ? 'dark' : 'light');
+  } catch (e) { /* プライベートブラウジング等でlocalStorageが使えない場合も表示は継続する */ }
+}
+
+// ⌨️ キーボードショートカット（?・d・Esc）が有効かどうかを、その都度localStorageから
+// 直接判定するヘルパー。未設定（null）の場合は有効（true）扱い。
+function skyShortcutsEnabled() {
+  try {
+    const v = localStorage.getItem(SHORTCUTS_KEY);
+    return v === null ? true : v === '1';
+  } catch (e) { return true; }
+}
+
+function settingsOpen() {
+  const cb = document.getElementById('shortcutsCheckbox');
+  if (cb) cb.checked = skyShortcutsEnabled();
+  applyThemeToDOM();
+  document.getElementById('settingsModal').classList.add('show');
+}
+function settingsClose() {
+  document.getElementById('settingsModal').classList.remove('show');
+}
+function onShortcutsCheckboxChange() {
+  const cb = document.getElementById('shortcutsCheckbox');
+  try {
+    localStorage.setItem(SHORTCUTS_KEY, cb.checked ? '1' : '0');
+  } catch (e) { /* プライベートブラウジング等でlocalStorageが使えない場合も表示は継続する */ }
+}
+
+// Escapeで閉じるべき「開いているモーダル」の登録先（このリポジトリには
+// 表示設定モーダル以外にモーダルは存在しない）
+function closeTopmostOpenModal() {
+  const modal = document.getElementById('settingsModal');
+  if (modal && modal.classList.contains('show')) { settingsClose(); return; }
+}
+
+// ⌨️ 全ツール共通のキーボードショートカット（?＝表示設定を開く／d,D＝ダークモード切替／
+// Esc＝開いているモーダルを閉じる）。Escはテキスト入力中でも常に有効（ダイアログを閉じる
+// のはユーザーの期待に沿うため）。?とdは、テキスト入力中は通常の文字入力として使えるよう
+// ガードする。
+document.addEventListener('keydown', function (e) {
+  if (e.repeat) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const tgt = e.target;
+  const isTyping = tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.tagName === 'SELECT' || tgt.isContentEditable);
+
+  if (e.key === 'Escape') {
+    closeTopmostOpenModal();
+    return;
+  }
+
+  if (isTyping) return;
+  if (!skyShortcutsEnabled()) return;
+
+  if (e.key === '?') { e.preventDefault(); settingsOpen(); return; }
+  if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleTheme(); return; }
+});
 
 /* ================================================================
    サイドバー開閉
@@ -713,6 +930,7 @@ function confirmImport() {
    初期化
    ================================================================ */
 applyI18n();
+applyThemeToDOM();
 renderExportSiteList();
 </script>
 </body>
