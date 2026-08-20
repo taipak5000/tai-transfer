@@ -188,6 +188,15 @@
       background: var(--card); border: 1px solid var(--sep); color: var(--text);
       padding: 6px 12px; font-size: 12px; border-radius: 20px; cursor: pointer; font-weight: 700; white-space: nowrap;
     }
+    /* 🌐 表示設定モーダル内の言語セレクター（1言語=1ボタン。トグルではなく選択式）。
+       選択中の言語は.sidebar-nav-link.current-toolと同じpurpleアクセント配色で強調する。 */
+    .lang-select-row { display: flex; gap: 8px; }
+    .lang-select-btn {
+      flex: 1; background: var(--card); border: 1px solid var(--sep); color: var(--text);
+      padding: 8px 10px; font-size: 13px; border-radius: var(--r-sm); cursor: pointer;
+      font-weight: 600; text-align: center;
+    }
+    .lang-select-btn.active { background: var(--purple-bg); border-color: var(--purple); color: var(--purple-d); font-weight: 700; }
     .settings-key {
       flex-shrink: 0; min-width: 30px; text-align: center; font-weight: 700;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px;
@@ -317,6 +326,14 @@
       </div>
     </div>
 
+    <div class="settings-section">
+      <p class="settings-section-label" data-i18n="settings.langLabel"></p>
+      <div class="lang-select-row">
+        <button type="button" class="lang-select-btn" id="settingsLangJaBtn" onclick="setLang('ja')">日本語</button>
+        <button type="button" class="lang-select-btn" id="settingsLangEnBtn" onclick="setLang('en')">English</button>
+      </div>
+    </div>
+
     <button type="button" class="settings-close-btn" onclick="settingsClose()" data-i18n="settings.closeBtn"></button>
   </div>
 </div>
@@ -399,6 +416,7 @@ const I18N = {
     'settings.shortcutOpen': 'この設定を開く',
     'settings.shortcutTheme': 'ダークモード切替',
     'settings.shortcutEscape': '開いているウィンドウを閉じる',
+    'settings.langLabel': '🌐 言語',
     'settings.closeBtn': '閉じる',
     'dyn.creatingCode': 'コードを作成中…',
     'dyn.selectAtLeastOneSite': '少なくとも1つサイトを選んでください。',
@@ -461,6 +479,7 @@ const I18N = {
     'settings.shortcutOpen': 'Open this settings panel',
     'settings.shortcutTheme': 'Toggle dark mode',
     'settings.shortcutEscape': 'Close the open window',
+    'settings.langLabel': '🌐 Language',
     'settings.closeBtn': 'Close',
     'dyn.creatingCode': 'Creating code…',
     'dyn.selectAtLeastOneSite': 'Please select at least one site.',
@@ -513,13 +532,23 @@ function applyI18n() {
 }
 
 function toggleLang() {
-  LANG = LANG === 'ja' ? 'en' : 'ja';
+  setLang(LANG === 'ja' ? 'en' : 'ja');
+}
+
+// ⚙️ 表示設定モーダルの言語セレクター（🌐 言語 / Language）用：トグルと違い、押した言語へ
+// 直接切り替える。既に選択中の言語を押した場合は何もしない安全なノーオペとする
+// （無駄な再描画やlocalStorage書き込みを避ける。UXの要件として明示されている）。
+function setLang(lang) {
+  if (lang !== 'ja' && lang !== 'en') return;
+  if (lang === LANG) return;
+  LANG = lang;
   localStorage.setItem(LANG_KEY, LANG);
   applyI18n();
   applyThemeToDOM(); // ダーク/ライト切替ボタンのラベル文言も、言語切替時に更新する
   renderExportSiteList();
   renderExportOutput();
   renderImportSiteArea();
+  syncSettingsLangButtons();
 }
 
 /* ================================================================
@@ -556,10 +585,19 @@ function skyShortcutsEnabled() {
   } catch (e) { return true; }
 }
 
+// 表示設定モーダル内の言語セレクターボタンの選択中ハイライトを、現在の言語(LANG)に同期する
+function syncSettingsLangButtons() {
+  const jaBtn = document.getElementById('settingsLangJaBtn');
+  const enBtn = document.getElementById('settingsLangEnBtn');
+  if (jaBtn) jaBtn.classList.toggle('active', LANG === 'ja');
+  if (enBtn) enBtn.classList.toggle('active', LANG === 'en');
+}
+
 function settingsOpen() {
   const cb = document.getElementById('shortcutsCheckbox');
   if (cb) cb.checked = skyShortcutsEnabled();
   applyThemeToDOM();
+  syncSettingsLangButtons();
   document.getElementById('settingsModal').classList.add('show');
 }
 function settingsClose() {
