@@ -38,7 +38,7 @@
       --red:       #FF3B30;
       --text:      #1C1C1E;
       --text-2:    #8E8E93;
-      --text-3:    #C7C7CC;
+      --text-3:    #636366;
       --r:         16px;
       --r-sm:      10px;
     }
@@ -132,6 +132,15 @@
     .site-opt-count { font-size: 12px; color: var(--text-2); }
     .site-opt.no-data { opacity: 0.45; }
 
+    /* ✅ 各サイト選択リスト共通の「全選択／全解除」行（wingsの.area-btnに倣った
+       ピル型の小さいテキストボタン）。エクスポート側は静的HTML、インポート側は
+       復元候補サイトが判明してから動的に描画される。 */
+    .list-select-row { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 8px; }
+    .list-select-btn {
+      font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+      background: var(--bg); color: var(--text-2); border: 1px solid var(--sep); white-space: nowrap;
+    }
+
     .action-btn {
       display: block; width: 100%; padding: 12px; border-radius: var(--r-sm); font-size: 14.5px; font-weight: 700;
       text-align: center; cursor: pointer; margin-top: 12px; box-sizing: border-box;
@@ -152,6 +161,17 @@
     .status-msg { font-size: 12.5px; color: var(--text-2); margin-top: 10px; line-height: 1.6; }
     .status-msg.ok { color: var(--green); }
     .status-msg.err { color: var(--red); }
+
+    /* 📱 QRコード表示パネル。スキャン用途のため、ダークモードでも背景は
+       意図的に固定の白（テーマトークンを使わない）にしている。QRコードは
+       「白地に黒」でないと読み取り精度が落ちるため、これはテーマ非対応の
+       意図的な例外。 */
+    .qr-panel { text-align: center; margin-top: 10px; }
+    .qr-box {
+      display: inline-block; background: #fff; padding: 12px; border-radius: var(--r-sm);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .qr-box svg { display: block; width: 200px; height: 200px; max-width: 100%; }
 
     footer { text-align: center; font-size: 11.5px; color: var(--text-3); padding: 34px 16px 12px; line-height: 1.9; }
     footer a { color: var(--purple-d); text-decoration: none; }
@@ -268,6 +288,10 @@
     <p class="sec-label" id="exportSection" data-i18n="page.sectionExport"></p>
     <div class="card">
       <div class="hint" data-i18n="page.exportHint"></div>
+      <div class="list-select-row">
+        <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', true)" data-i18n="page.selectAllBtn"></button>
+        <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', false)" data-i18n="page.selectNoneBtn"></button>
+      </div>
       <div id="exportSiteList"></div>
       <button type="button" class="action-btn primary" onclick="generateExportCode()" data-i18n="page.createCodeBtn"></button>
       <div id="exportOutputArea"></div>
@@ -399,6 +423,8 @@ const I18N = {
     'page.createCodeBtn': '📋 選んだサイトのコードを作成',
     'page.loadCodeBtn': '🔍 コードを読み込む',
     'page.pastePlaceholder': 'ここに引き継ぎコードを貼り付け',
+    'page.selectAllBtn': '全選択',
+    'page.selectNoneBtn': '全解除',
     'footer.disclaimer': 'このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。',
     'footer.creditLabel': '作成・ご意見:',
     'footer.requestForm': 'リクエストフォーム',
@@ -425,6 +451,11 @@ const I18N = {
     'dyn.downloadBtn': '⬇️ ファイルとしてダウンロード（推奨）',
     'dyn.showCodeBtn': '📋 コードをテキストで表示してコピー',
     'dyn.copyCodeBtn': '📋 コードをコピー',
+    'dyn.showQrBtn': '📱 QRコードを表示',
+    'dyn.qrLoading': 'QRコードを準備中…',
+    'dyn.qrCaption': '別の端末のカメラや読み取りアプリでスキャンしてください。',
+    'dyn.qrTooLong': 'コードが長すぎるため、QRコードとしては表示できません。「ファイルとしてダウンロード」またはコピー&ペーストをご利用ください。',
+    'dyn.qrLoadFailed': 'QRコード表示用のライブラリの読み込みに失敗しました。通信環境をご確認のうえ、もう一度お試しください。',
     'dyn.downloadSuccess': 'ファイルをダウンロードしました。別の端末に送って「コードから復元」の「ファイルを選択」で読み込んでください。',
     'dyn.copySuccess': 'コピーしました。別の端末の「コードから復元」に貼り付けてください。',
     'dyn.copyFailed': 'コピーに失敗しました。コードが選択された状態なので、手動でコピーしてください。',
@@ -461,6 +492,8 @@ const I18N = {
     'page.createCodeBtn': '📋 Create Code for Selected Sites',
     'page.loadCodeBtn': '🔍 Load Code',
     'page.pastePlaceholder': 'Paste your transfer code here',
+    'page.selectAllBtn': 'Select All',
+    'page.selectNoneBtn': 'Deselect All',
     'footer.disclaimer': 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.',
     'footer.creditLabel': 'Created by / feedback:',
     'footer.requestForm': 'Request form',
@@ -487,6 +520,11 @@ const I18N = {
     'dyn.downloadBtn': '⬇️ Download as File (Recommended)',
     'dyn.showCodeBtn': '📋 Show Code as Text to Copy',
     'dyn.copyCodeBtn': '📋 Copy Code',
+    'dyn.showQrBtn': '📱 Show QR Code',
+    'dyn.qrLoading': 'Preparing QR code…',
+    'dyn.qrCaption': 'Scan this with another device\'s camera or a QR reader app.',
+    'dyn.qrTooLong': 'This code is too long to display as a QR code. Please use "Download as File" or copy & paste instead.',
+    'dyn.qrLoadFailed': 'Failed to load the QR code library. Please check your connection and try again.',
     'dyn.downloadSuccess': 'File downloaded. Send it to another device and load it using "Choose File" under "Restore from a Code".',
     'dyn.copySuccess': 'Copied. Paste it into "Restore from a Code" on another device.',
     'dyn.copyFailed': 'Copy failed. The code is selected, so please copy it manually.',
@@ -719,6 +757,11 @@ function matchKeysForSite(site, keyPool) {
   ));
 }
 
+// ✅ エクスポート／インポート、両方のサイト選択チェックリスト共通の「全選択／全解除」処理
+function setAllSiteCheckboxes(selector, checked) {
+  document.querySelectorAll(selector).forEach(cb => { cb.checked = checked; });
+}
+
 /* ================================================================
    コードの圧縮/展開 + Base64（UTF-8セーフ）
    「コードが長すぎる」というフィードバックを受けて、JSON文字列をgzip圧縮
@@ -795,6 +838,7 @@ function renderExportSiteList() {
 let lastExportCode = null;
 let lastExportResult = null; // { selectedIds, keyCount, codeLength, compressRate }
 let exportTextareaOpen = false;
+let exportQrOpen = false;
 
 async function generateExportCode() {
   const statusEl = document.getElementById('exportStatus');
@@ -805,6 +849,7 @@ async function generateExportCode() {
   lastExportCode = null;
   lastExportResult = null;
   exportTextareaOpen = false;
+  exportQrOpen = false;
 
   const allKeys = getAllLocalStorageKeys();
   const selectedIds = [...document.querySelectorAll('#exportSiteList .site-checkbox:checked')].map(el => el.dataset.site);
@@ -859,13 +904,19 @@ function renderExportOutput() {
     return site ? siteLabel(site) : id;
   }).join(sep);
   const compressNote = compressRate > 0 ? t('dyn.compressNote', { rate: compressRate }) : '';
+  const qrFeasible = codeLength <= QR_MAX_BYTES;
   outputEl.innerHTML = `
     <div class="status-msg">${t('dyn.exportSummary', { sites: escapeHtml(siteLabels), count: keyCount, length: codeLength.toLocaleString(), compressNote })}</div>
     <button type="button" class="action-btn primary" onclick="downloadExportFile()">${t('dyn.downloadBtn')}</button>
     <button type="button" class="action-btn secondary" onclick="toggleExportTextarea()">${t('dyn.showCodeBtn')}</button>
     <div id="exportTextareaArea"></div>
+    ${qrFeasible
+      ? `<button type="button" class="action-btn secondary" onclick="toggleExportQr()">${t('dyn.showQrBtn')}</button>`
+      : `<div class="status-msg">${t('dyn.qrTooLong')}</div>`}
+    <div id="exportQrArea"></div>
   `;
   renderExportTextareaArea();
+  renderExportQrArea();
 }
 
 function toggleExportTextarea() {
@@ -914,6 +965,66 @@ async function copyExportCode() {
   } catch (e) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = t('dyn.copyFailed');
+  }
+}
+
+/* ================================================================
+   📱 QRコード表示（端末間でAirDropやメッセージアプリを使わず、コードを
+   カメラで読み取って渡せるようにする追加パネル）。QRコード生成ライブラリ
+   （kazuhikoarase/qrcode-generator, MIT・依存ライブラリなし）は、使う瞬間
+   まで読み込まない方式でCDNから動的ロードする（他ツールのhtml2canvas
+   遅延ロードと同じパターン）。
+   ================================================================ */
+// QRコード バージョン40・誤り訂正レベルL におけるバイトモードの最大データ量(バイト)。
+// これを超えるコードは、実際の生成を試みるまでもなくQR非対応として扱う。
+const QR_MAX_BYTES = 2953;
+
+let qrLibLoading = null;
+function ensureQrCodeLib() {
+  if (window.qrcode) return Promise.resolve();
+  if (qrLibLoading) return qrLibLoading;
+  qrLibLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => { qrLibLoading = null; reject(new Error('qrcode lib load failed')); };
+    document.head.appendChild(s);
+  });
+  return qrLibLoading;
+}
+
+function toggleExportQr() {
+  if (!lastExportCode) return;
+  exportQrOpen = !exportQrOpen;
+  renderExportQrArea();
+}
+
+async function renderExportQrArea() {
+  const area = document.getElementById('exportQrArea');
+  if (!area) return;
+  if (!exportQrOpen || !lastExportCode) { area.innerHTML = ''; return; }
+  const code = lastExportCode; // 読み込み待ちの間にコードが再生成/変更されていないかの確認用
+  area.innerHTML = `<div class="status-msg">${t('dyn.qrLoading')}</div>`;
+  try {
+    await ensureQrCodeLib();
+  } catch (e) {
+    if (code === lastExportCode && exportQrOpen) area.innerHTML = `<div class="status-msg err">${t('dyn.qrLoadFailed')}</div>`;
+    return;
+  }
+  if (code !== lastExportCode || !exportQrOpen) return; // 読み込み中に閉じられた／別コードに変わった場合は何もしない
+
+  try {
+    const qr = qrcode(0, 'L'); // typeNumber:0=自動選択, errorCorrectionLevel:L=最大容量優先
+    qr.addData(code);
+    qr.make();
+    const svg = qr.createSvgTag({ scalable: true });
+    area.innerHTML = `
+      <div class="qr-panel"><div class="qr-box">${svg}</div></div>
+      <div class="status-msg">${t('dyn.qrCaption')}</div>
+    `;
+  } catch (e) {
+    // ライブラリ側の容量超過エラー（QR_MAX_BYTESの見積もりに漏れがあった場合の保険）
+    area.innerHTML = `<div class="status-msg err">${t('dyn.qrTooLong')}</div>`;
   }
 }
 
@@ -995,6 +1106,10 @@ function renderImportSiteArea() {
     return;
   }
   siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
+    `<div class="list-select-row">
+      <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', true)">${t('page.selectAllBtn')}</button>
+      <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', false)">${t('page.selectNoneBtn')}</button>
+    </div>` +
     lastImportDetected.map(site => {
       const matched = matchKeysForSite(site, lastImportDataKeys);
       return `
@@ -1035,6 +1150,7 @@ function confirmImport() {
   document.getElementById('importSiteArea').innerHTML = '';
   document.getElementById('importConfirmArea').innerHTML = '';
   document.getElementById('importCodeInput').value = '';
+  renderExportSiteList(); // インポートで書き込んだデータを、エクスポート側のチェックリスト/件数へ即反映する
 }
 
 /* ================================================================
