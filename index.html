@@ -54,7 +54,7 @@
       --purple-bg: rgba(175,82,222,0.22);
       --text:      #F2F2F7;
       --text-2:    #98989D;
-      --text-3:    #636366;
+      --text-3:    #86868B;
     }
     [data-theme="dark"] nav { background: rgba(0,0,0,0.75); }
 
@@ -453,6 +453,7 @@ const I18N = {
     'dyn.copyCodeBtn': '📋 コードをコピー',
     'dyn.showQrBtn': '📱 QRコードを表示',
     'dyn.qrLoading': 'QRコードを準備中…',
+    'dyn.qrAlt': 'データ引き継ぎ用のQRコード',
     'dyn.qrCaption': '別の端末のカメラや読み取りアプリでスキャンしてください。',
     'dyn.qrTooLong': 'コードが長すぎるため、QRコードとしては表示できません。「ファイルとしてダウンロード」またはコピー&ペーストをご利用ください。',
     'dyn.qrLoadFailed': 'QRコード表示用のライブラリの読み込みに失敗しました。通信環境をご確認のうえ、もう一度お試しください。',
@@ -522,6 +523,7 @@ const I18N = {
     'dyn.copyCodeBtn': '📋 Copy Code',
     'dyn.showQrBtn': '📱 Show QR Code',
     'dyn.qrLoading': 'Preparing QR code…',
+    'dyn.qrAlt': 'QR code for data transfer',
     'dyn.qrCaption': 'Scan this with another device\'s camera or a QR reader app.',
     'dyn.qrTooLong': 'This code is too long to display as a QR code. Please use "Download as File" or copy & paste instead.',
     'dyn.qrLoadFailed': 'Failed to load the QR code library. Please check your connection and try again.',
@@ -721,13 +723,20 @@ const SITE_CATALOG = [
   { id: 'star-candle', label: '🕯️ 星のキャンドル計算機', labelEn: '🕯️ Star Candle Calculator', namespaced: true, keys: [
     'skyStarCandleCalc_v1', 'skyStarCandleCalc_checkedDays_v1', 'skyStarCandleCalc_history_v1'
   ]},
+  { id: 'nomacan', label: '🕯️ ノマキャン計算機', labelEn: '🕯️ Nomacan Calculator', namespaced: true, keys: [
+    'skyNomacanCalc_v1', 'skyNomacanCalc_history_v1', 'skyNomacanGoals_v1'
+  ]},
   { id: 'share', label: '📍 創作物管理ツール', labelEn: '📍 Creation Manager', namespaced: true, keys: [
     'sky_tracker_storage'
   ]},
   { id: 'emote', label: '🎭 エモート所持率管理', labelEn: '🎭 Emote Collection', namespaced: true, keys: [
     'emoteOwned_v1', 'emoteShareCustomize_v1', 'emoteViewMode_v1'
   ]},
-  { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', labelEn: '🌳 Spirit Tree Manager', namespaced: true, keys: [
+  // 🌳 精霊ツリー管理はまだ一般公開していないため、チェックリストには表示しない
+  // （hidden:true）。ただし既存ユーザーのデータを引き継ぎから静かに消さないよう、
+  // エクスポート/インポートの対象キーとしてはそのまま扱う（PROFILE_REGISTRY_KEYSと
+  // 同様、選択UIを介さず常に一緒に処理する）。
+  { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', labelEn: '🌳 Spirit Tree Manager', namespaced: true, hidden: true, keys: [
     'spiritCatalogUnlocked_v1'
   ]},
   { id: 'currency', label: '💰 所持通貨（共通）', labelEn: '💰 Owned Currency (Shared)', namespaced: true, keys: [
@@ -823,7 +832,7 @@ function escapeHtml(str) {
 function renderExportSiteList() {
   const allKeys = getAllLocalStorageKeys();
   const el = document.getElementById('exportSiteList');
-  el.innerHTML = SITE_CATALOG.map(site => {
+  el.innerHTML = SITE_CATALOG.filter(site => !site.hidden).map(site => {
     const matched = matchKeysForSite(site, allKeys);
     const hasData = matched.length > 0;
     return `
@@ -853,7 +862,11 @@ async function generateExportCode() {
 
   const allKeys = getAllLocalStorageKeys();
   const selectedIds = [...document.querySelectorAll('#exportSiteList .site-checkbox:checked')].map(el => el.dataset.site);
-  if (selectedIds.length === 0) {
+  // 🌳 hidden:true のサイトはチェックリストに出ないため選択のしようがないが、既存データを
+  // 持っていれば下で選択の有無に関わらず常に含めるため、「選択0件」エラーの判定にも
+  // それを反映する（confirmImport()側のhasHiddenDataと同じ扱い）。
+  const hasHiddenExportData = SITE_CATALOG.filter(s => s.hidden).some(site => matchKeysForSite(site, allKeys).length > 0);
+  if (selectedIds.length === 0 && !hasHiddenExportData) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = t('dyn.selectAtLeastOneSite');
     return;
@@ -866,6 +879,12 @@ async function generateExportCode() {
   });
   selectedIds.forEach(id => {
     const site = SITE_CATALOG.find(s => s.id === id);
+    matchKeysForSite(site, allKeys).forEach(k => { dump[k] = localStorage.getItem(k); });
+  });
+  // 🌳 hidden:true のサイト（未公開ツール等）はチェックリストに出さないが、既存データを
+  // 引き継ぎから静かに落とさないよう、選択の有無に関わらず常に一緒に含める
+  // （PROFILE_REGISTRY_KEYSと同じ「選択UIを介さない」扱い）。
+  SITE_CATALOG.filter(s => s.hidden).forEach(site => {
     matchKeysForSite(site, allKeys).forEach(k => { dump[k] = localStorage.getItem(k); });
   });
 
@@ -1022,6 +1041,20 @@ async function renderExportQrArea() {
       <div class="qr-panel"><div class="qr-box">${svg}</div></div>
       <div class="status-msg">${t('dyn.qrCaption')}</div>
     `;
+    // ♿ ライブラリが生成する<svg>にはアクセシブルネームが無いため、スクリーン
+    // リーダー向けにrole="img"・aria-label・<title>を後付けで補う。
+    const svgEl = area.querySelector('.qr-box svg');
+    if (svgEl) {
+      const qrAltText = t('dyn.qrAlt');
+      svgEl.setAttribute('role', 'img');
+      svgEl.setAttribute('aria-label', qrAltText);
+      let titleEl = svgEl.querySelector('title');
+      if (!titleEl) {
+        titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        svgEl.insertBefore(titleEl, svgEl.firstChild);
+      }
+      titleEl.textContent = qrAltText;
+    }
   } catch (e) {
     // ライブラリ側の容量超過エラー（QR_MAX_BYTESの見積もりに漏れがあった場合の保険）
     area.innerHTML = `<div class="status-msg err">${t('dyn.qrTooLong')}</div>`;
@@ -1092,7 +1125,10 @@ async function processImportCode(code) {
     return;
   }
 
-  lastImportDetected = detected;
+  // 🌳 hidden:true のサイトはチェックリストには出さない（未公開ツール等）が、コードに
+  // 含まれていれば復元自体はconfirmImport()側で常に行うため、ここでは表示用リストから
+  // 除くだけで検出判定自体（上のdetected）には影響させない。
+  lastImportDetected = detected.filter(site => !site.hidden);
   lastImportDataKeys = dataKeys;
   renderImportSiteArea();
 }
@@ -1127,7 +1163,9 @@ function confirmImport() {
   const statusEl = document.getElementById('importStatus');
   const dataKeys = Object.keys(pendingImportData);
   const selectedIds = [...document.querySelectorAll('#importSiteArea .import-site-checkbox:checked')].map(el => el.dataset.site);
-  if (selectedIds.length === 0) {
+  const hiddenSites = SITE_CATALOG.filter(s => s.hidden);
+  const hasHiddenData = hiddenSites.some(site => matchKeysForSite(site, dataKeys).length > 0);
+  if (selectedIds.length === 0 && !hasHiddenData) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = t('dyn.selectAtLeastOneSite');
     return;
@@ -1139,6 +1177,11 @@ function confirmImport() {
   });
   selectedIds.forEach(id => {
     const site = SITE_CATALOG.find(s => s.id === id);
+    matchKeysForSite(site, dataKeys).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
+  });
+  // 🌳 hidden:true のサイトはチェックリストに出ないため選択できないが、コードに含まれて
+  // いれば選択の有無に関わらず常に復元する（既存データを静かに落とさないため）。
+  hiddenSites.forEach(site => {
     matchKeysForSite(site, dataKeys).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
   });
 
