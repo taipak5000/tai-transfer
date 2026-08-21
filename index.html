@@ -37,7 +37,7 @@
       --green:     #34C759;
       --red:       #FF3B30;
       --text:      #1C1C1E;
-      --text-2:    #8E8E93;
+      --text-2:    #6C6C71;
       --text-3:    #636366;
       --r:         16px;
       --r-sm:      10px;
@@ -447,6 +447,7 @@ const I18N = {
     'dyn.codeGenFailed': 'コードの生成に失敗しました。',
     'dyn.keysCount': '{n}件',
     'dyn.exportSummary': '選択したサイト: {sites}（{count}件のキー、コード{length}文字{compressNote}）',
+    'dyn.hiddenOnlyExportSummary': '非公開ツールのデータのみが含まれています（{count}件のキー、コード{length}文字{compressNote}）',
     'dyn.compressNote': '　圧縮で約{rate}%短縮済み',
     'dyn.downloadBtn': '⬇️ ファイルとしてダウンロード（推奨）',
     'dyn.showCodeBtn': '📋 コードをテキストで表示してコピー',
@@ -465,6 +466,7 @@ const I18N = {
     'dyn.notThisToolCode': 'このツールで作成したコードではないようです。',
     'dyn.noMatchingSiteData': 'コードの中に、対応するサイトのデータが見つかりませんでした。',
     'dyn.selectSitesToRestore': '復元するサイトを選んでください：',
+    'dyn.hiddenOnlyImportNotice': '非公開ツールのデータのみが含まれています。',
     'dyn.restoreBtn': '✅ 選んだサイトを復元する',
     'dyn.restoreSuccess': '{n}件のキーを復元しました。'
   },
@@ -515,8 +517,9 @@ const I18N = {
     'dyn.creatingCode': 'Creating code…',
     'dyn.selectAtLeastOneSite': 'Please select at least one site.',
     'dyn.codeGenFailed': 'Failed to generate the code.',
-    'dyn.keysCount': '{n} keys',
+    'dyn.keysCount': vars => `${vars.n} ${vars.n === 1 ? 'key' : 'keys'}`,
     'dyn.exportSummary': 'Selected sites: {sites} ({count} keys, code is {length} characters{compressNote})',
+    'dyn.hiddenOnlyExportSummary': 'Only data from private (unpublished) tools is included ({count} keys, code is {length} characters{compressNote})',
     'dyn.compressNote': ' · Compressed by about {rate}%',
     'dyn.downloadBtn': '⬇️ Download as File (Recommended)',
     'dyn.showCodeBtn': '📋 Show Code as Text to Copy',
@@ -535,14 +538,19 @@ const I18N = {
     'dyn.notThisToolCode': "This doesn't look like a code created by this tool.",
     'dyn.noMatchingSiteData': 'No supported site data was found in this code.',
     'dyn.selectSitesToRestore': 'Select the sites to restore:',
+    'dyn.hiddenOnlyImportNotice': 'Only data from private (unpublished) tools is included.',
     'dyn.restoreBtn': '✅ Restore Selected Sites',
-    'dyn.restoreSuccess': 'Restored {n} keys.'
+    'dyn.restoreSuccess': vars => `Restored ${vars.n} ${vars.n === 1 ? 'key' : 'keys'}.`
   }
 };
 
 function t(key, vars) {
   const dict = I18N[LANG] || I18N.ja;
-  let str = dict[key] !== undefined ? dict[key] : (I18N.ja[key] !== undefined ? I18N.ja[key] : key);
+  let entry = dict[key] !== undefined ? dict[key] : (I18N.ja[key] !== undefined ? I18N.ja[key] : key);
+  // 英語の単数/複数（"1 key" vs "2 keys"）のように、変数の値によって文言そのものが
+  // 変わるものは、辞書の値を文字列ではなく関数（vars => string）として定義できる
+  // ようにする（日本語は数による語形変化が無いため、文字列のままでよい）。
+  let str = typeof entry === 'function' ? entry(vars || {}) : entry;
   if (vars) {
     Object.keys(vars).forEach(k => { str = str.split('{' + k + '}').join(vars[k]); });
   }
@@ -647,11 +655,14 @@ function onShortcutsCheckboxChange() {
   } catch (e) { /* プライベートブラウジング等でlocalStorageが使えない場合も表示は継続する */ }
 }
 
-// Escapeで閉じるべき「開いているモーダル」の登録先（このリポジトリには
-// 表示設定モーダル以外にモーダルは存在しない）
+// Escapeで閉じるべき「開いているモーダル／オーバーレイ」の登録先。表示設定モーダルに
+// 加え、「他のツール」サイドバー・ドロワー（ハンバーガーメニュー）もEscで閉じられる
+// ようにする（サイドバーもモーダル同様に画面を覆うオーバーレイのため）。
 function closeTopmostOpenModal() {
   const modal = document.getElementById('settingsModal');
   if (modal && modal.classList.contains('show')) { settingsClose(); return; }
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('sidebar-open')) { toggleSidebar(); return; }
 }
 
 // ⌨️ 全ツール共通のキーボードショートカット（?＝表示設定を開く／d,D＝ダークモード切替／
@@ -712,7 +723,7 @@ const SITE_CATALOG = [
     'gameItems_hairstyle', 'gameItems_hair_accessory', 'gameItems_head_accessory', 'gameItems_cape',
     'gameItems_portable_item', 'gameItems_large_placeable', 'gameItems_small_placeable',
     'seasonAcquireMode_v1', 'shareCustomize_v1', 'favShareStyle_v1', 'favShareTheme_v1',
-    'gameItems_viewMode', 'gameItems_gridCols'
+    'gameItems_viewMode', 'gameItems_gridCols', 'lastRandomCoord_v1'
   ]},
   { id: 'wings', label: '🪽 羽トラッカー', labelEn: '🪽 Wing Tracker', namespaced: true, keys: [
     'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1'
@@ -738,6 +749,13 @@ const SITE_CATALOG = [
   // 同様、選択UIを介さず常に一緒に処理する）。
   { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', labelEn: '🌳 Spirit Tree Manager', namespaced: true, hidden: true, keys: [
     'spiritCatalogUnlocked_v1'
+  ]},
+  // 🎵 楽譜づくり（tai-score）も精霊ツリー管理と同様、まだ一般公開しておらず
+  // 他サイトのサイドバーからもリンクを外している（未完成のため）ので hidden:true
+  // として扱う。プロフィール機構は使っておらずキーはグローバル（namespaced:false）。
+  // 作成した楽譜データを引き継ぎから静かに消さないよう、対象キーとしては常に含める。
+  { id: 'score', label: '🎵 楽譜づくり', labelEn: '🎵 Sheet Music Maker', namespaced: false, hidden: true, keys: [
+    'taiScoreSongs_v1', 'taiScoreKeyBindings_v1', 'taiScoreInputMode_v1', 'taiScoreFreePlayInstrument_v1'
   ]},
   { id: 'currency', label: '💰 所持通貨（共通）', labelEn: '💰 Owned Currency (Shared)', namespaced: true, keys: [
     'wishOwnCurrency', 'skyCurrencyExtra_v1'
@@ -849,16 +867,24 @@ let lastExportResult = null; // { selectedIds, keyCount, codeLength, compressRat
 let exportTextareaOpen = false;
 let exportQrOpen = false;
 
-async function generateExportCode() {
-  const statusEl = document.getElementById('exportStatus');
-  const outputEl = document.getElementById('exportOutputArea');
-  statusEl.className = 'status-msg';
-  statusEl.textContent = t('dyn.creatingCode');
-  outputEl.innerHTML = '';
+// 📤 エクスポート出力（ダウンロード/コピー/QR）の状態を破棄し、パネルを空にする。
+// 新しくコードを作成する直前と、インポートが完了した直後（インポートで書き込んだ
+// データが反映されていない古いコードを誤ってダウンロード/コピー/QR表示させない
+// ため）の両方から呼び出す。
+function resetExportOutput() {
   lastExportCode = null;
   lastExportResult = null;
   exportTextareaOpen = false;
   exportQrOpen = false;
+  const outputEl = document.getElementById('exportOutputArea');
+  if (outputEl) outputEl.innerHTML = '';
+}
+
+async function generateExportCode() {
+  const statusEl = document.getElementById('exportStatus');
+  statusEl.className = 'status-msg';
+  statusEl.textContent = t('dyn.creatingCode');
+  resetExportOutput();
 
   const allKeys = getAllLocalStorageKeys();
   const selectedIds = [...document.querySelectorAll('#exportSiteList .site-checkbox:checked')].map(el => el.dataset.site);
@@ -917,15 +943,22 @@ function renderExportOutput() {
   const outputEl = document.getElementById('exportOutputArea');
   if (!lastExportResult) { outputEl.innerHTML = ''; return; }
   const { selectedIds, keyCount, codeLength, compressRate } = lastExportResult;
-  const sep = LANG === 'en' ? ', ' : '、';
-  const siteLabels = selectedIds.map(id => {
-    const site = SITE_CATALOG.find(s => s.id === id);
-    return site ? siteLabel(site) : id;
-  }).join(sep);
   const compressNote = compressRate > 0 ? t('dyn.compressNote', { rate: compressRate }) : '';
+  // 🌳 選択可能なサイトを1つも選ばず、非公開（hidden）サイトのデータのみが含まれる
+  // コードを作成した場合は「選択したサイト: （」のように主語が空になってしまうため、
+  // 専用の説明文に差し替える。
+  const summary = selectedIds.length === 0
+    ? t('dyn.hiddenOnlyExportSummary', { count: keyCount, length: codeLength.toLocaleString(), compressNote })
+    : t('dyn.exportSummary', {
+        sites: escapeHtml(selectedIds.map(id => {
+          const site = SITE_CATALOG.find(s => s.id === id);
+          return site ? siteLabel(site) : id;
+        }).join(LANG === 'en' ? ', ' : '、')),
+        count: keyCount, length: codeLength.toLocaleString(), compressNote
+      });
   const qrFeasible = codeLength <= QR_MAX_BYTES;
   outputEl.innerHTML = `
-    <div class="status-msg">${t('dyn.exportSummary', { sites: escapeHtml(siteLabels), count: keyCount, length: codeLength.toLocaleString(), compressNote })}</div>
+    <div class="status-msg">${summary}</div>
     <button type="button" class="action-btn primary" onclick="downloadExportFile()">${t('dyn.downloadBtn')}</button>
     <button type="button" class="action-btn secondary" onclick="toggleExportTextarea()">${t('dyn.showCodeBtn')}</button>
     <div id="exportTextareaArea"></div>
@@ -1141,6 +1174,16 @@ function renderImportSiteArea() {
     confirmAreaEl.innerHTML = '';
     return;
   }
+  if (lastImportDetected.length === 0) {
+    // 🌳 コードに含まれるのが非公開（hidden）サイトのデータのみの場合、選べる項目が
+    // 無いのに「復元するサイトを選んでください」ヘッダーや、空の0件チェックリスト＋
+    // 動作する全選択/全解除ピルを表示するのは不自然。専用の説明文だけを表示し、
+    // 復元自体はconfirmImport()側でhiddenSitesとして常に行われるため、確認ボタンは
+    // 通常どおり表示する。
+    siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.hiddenOnlyImportNotice')}</div>`;
+    confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="confirmImport()">${t('dyn.restoreBtn')}</button>`;
+    return;
+  }
   siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
     `<div class="list-select-row">
       <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', true)">${t('page.selectAllBtn')}</button>
@@ -1194,6 +1237,7 @@ function confirmImport() {
   document.getElementById('importConfirmArea').innerHTML = '';
   document.getElementById('importCodeInput').value = '';
   renderExportSiteList(); // インポートで書き込んだデータを、エクスポート側のチェックリスト/件数へ即反映する
+  resetExportOutput(); // インポート前に作成済みだったエクスポートコードは新データを含まず古くなるため破棄する
 }
 
 /* ================================================================
