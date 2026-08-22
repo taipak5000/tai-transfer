@@ -130,7 +130,13 @@
     .site-opt input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--purple); }
     .site-opt-label { flex: 1; font-size: 14px; color: var(--text); }
     .site-opt-count { font-size: 12px; color: var(--text-2); }
-    .site-opt.no-data { opacity: 0.45; }
+    /* ♿ データが無いサイトの行は、以前は行全体をopacity:0.45で薄くしていたが、
+       ライト/ダーク両テーマでWCAG AAのコントラスト比(通常文字4.5:1)を割り込んでいた
+       （チェックボックス自体はdisabledにしておらず、視覚的に薄いだけの表現のため）。
+       透過ではなく、既にAA基準を満たす--text-2トークン（カード背景に対し light 5.7:1
+       ／dark 5.9:1）へラベル文字色を差し替えることで、読みやすさを保ったまま
+       「データ無し」を伝える。 */
+    .site-opt.no-data .site-opt-label { color: var(--text-2); }
 
     /* ✅ 各サイト選択リスト共通の「全選択／全解除」行（wingsの.area-btnに倣った
        ピル型の小さいテキストボタン）。エクスポート側は静的HTML、インポート側は
@@ -161,6 +167,34 @@
     .status-msg { font-size: 12.5px; color: var(--text-2); margin-top: 10px; line-height: 1.6; }
     .status-msg.ok { color: var(--green); }
     .status-msg.err { color: var(--red); }
+
+    /* 🕒 エクスポート結果／インポート確認画面の「サイト別 最終更新」内訳リスト */
+    .site-updated-list { margin-top: 8px; }
+    .site-updated-row {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+      font-size: 12px; color: var(--text-2); padding: 3px 0;
+    }
+    .site-updated-row .site-updated-name { flex: 1; min-width: 0; }
+    .site-updated-row .site-updated-date { flex-shrink: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .site-updated-row.overwrite .site-updated-date { color: var(--red); font-weight: 700; }
+
+    /* ⚠️ インポート前の上書き確認（既にローカルにデータがあるサイトを検知した場合の
+       2段階確認）。既存の.status-msg等と同じトークンを再利用し、新規カラーは追加しない。 */
+    .import-warning-box {
+      background: var(--bg); border: 1px solid var(--purple); border-radius: var(--r-sm);
+      padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px; color: var(--text); line-height: 1.7;
+    }
+    .import-overwrite-confirm {
+      background: var(--bg); border: 1px solid var(--red); border-radius: var(--r-sm);
+      padding: 10px 12px; margin-top: 8px; font-size: 12.5px; color: var(--text); line-height: 1.7;
+    }
+    /* ♿ ボタン背景の白文字は共通トークン--red(#FF3B30)のままだとコントラスト比
+       約3.55:1でWCAG AAの通常文字基準(4.5:1)を満たさない。--redはstatus-msg.err等
+       「文字色」としての用途で使う分には既存踏襲だが、ボタン背景として白文字を
+       乗せる新規パターンはここが初出のため、この用途に限りボタン背景だけ
+       ワントーン濃い赤(#D70015・白文字で約5.38:1、AA適合)を使う。--redトークン
+       自体は他の既存箇所に影響するため変更しない。 */
+    .import-overwrite-confirm .action-btn.danger { background: #D70015; color: #fff; }
 
     /* 📱 QRコード表示パネル。スキャン用途のため、ダークモードでも背景は
        意図的に固定の白（テーマトークンを使わない）にしている。QRコードは
@@ -468,7 +502,19 @@ const I18N = {
     'dyn.selectSitesToRestore': '復元するサイトを選んでください：',
     'dyn.hiddenOnlyImportNotice': '非公開ツールのデータのみが含まれています。',
     'dyn.restoreBtn': '✅ 選んだサイトを復元する',
-    'dyn.restoreSuccess': '{n}件のキーを復元しました。'
+    'dyn.restoreSuccess': '{n}件のキーを復元しました。',
+    'dyn.siteUpdatedListHeading': '🕒 各サイトの最終更新（このツールで検知した限りの日時）',
+    'dyn.overwriteSitesLabel': '⚠️ 既にこの端末にデータがあり、上書きされるサイト：',
+    'dyn.overwriteHiddenNote': '（このほか非公開ツールのデータも{n}件、上書きされます）',
+    'dyn.overwriteHiddenOnlyLabel': '⚠️ 非公開ツールのデータ{n}件が、既にこの端末にあるデータを上書きします。',
+    'dyn.newProfilesLabel': '🆕 新しいプロフィールが{n}件追加されます：{names}',
+    'dyn.importCodeDateLabel': 'コード内',
+    'dyn.importLocalDateLabel': 'ローカル',
+    'dyn.importLocalNewerFlag': ' ❗ローカルの方が新しい可能性があります',
+    'dyn.importOverwriteConfirmText': '本当に上書きしてよろしいですか？この操作は取り消せません。心配な場合は、先に「エクスポート」で現在のデータをバックアップしておくことをおすすめします。',
+    'dyn.importOverwriteConfirmBtn': '⚠️ 上書きして復元する',
+    'dyn.cancelBtn': '取消',
+    'dyn.restoreSuccessNewProfiles': '新しいプロフィールも{n}件追加されました：{names}'
   },
   en: {
     'page.title': 'Data Transfer - Sky Collection Tracker',
@@ -540,7 +586,19 @@ const I18N = {
     'dyn.selectSitesToRestore': 'Select the sites to restore:',
     'dyn.hiddenOnlyImportNotice': 'Only data from private (unpublished) tools is included.',
     'dyn.restoreBtn': '✅ Restore Selected Sites',
-    'dyn.restoreSuccess': vars => `Restored ${vars.n} ${vars.n === 1 ? 'key' : 'keys'}.`
+    'dyn.restoreSuccess': vars => `Restored ${vars.n} ${vars.n === 1 ? 'key' : 'keys'}.`,
+    'dyn.siteUpdatedListHeading': '🕒 Last updated per site (as detected by this tool)',
+    'dyn.overwriteSitesLabel': '⚠️ Sites that already have local data on this device and will be overwritten:',
+    'dyn.overwriteHiddenNote': vars => ` (plus data from ${vars.n} private ${vars.n === 1 ? 'tool' : 'tools'}, also overwritten)`,
+    'dyn.overwriteHiddenOnlyLabel': vars => `⚠️ Data from ${vars.n} private ${vars.n === 1 ? 'tool' : 'tools'} will overwrite data already on this device.`,
+    'dyn.newProfilesLabel': vars => `🆕 ${vars.n} new ${vars.n === 1 ? 'profile' : 'profiles'} will be added: ${vars.names}`,
+    'dyn.importCodeDateLabel': 'in code',
+    'dyn.importLocalDateLabel': 'local',
+    'dyn.importLocalNewerFlag': ' ❗ Local data may be newer',
+    'dyn.importOverwriteConfirmText': "Are you sure you want to overwrite? This cannot be undone. If you're unsure, we recommend backing up your current data with \"Export\" first.",
+    'dyn.importOverwriteConfirmBtn': '⚠️ Overwrite and Restore',
+    'dyn.cancelBtn': 'Cancel',
+    'dyn.restoreSuccessNewProfiles': vars => ` ${vars.n} new ${vars.n === 1 ? 'profile was' : 'profiles were'} also added: ${vars.names}`
   }
 };
 
@@ -723,16 +781,39 @@ const SITE_CATALOG = [
     'gameItems_hairstyle', 'gameItems_hair_accessory', 'gameItems_head_accessory', 'gameItems_cape',
     'gameItems_portable_item', 'gameItems_large_placeable', 'gameItems_small_placeable',
     'seasonAcquireMode_v1', 'shareCustomize_v1', 'favShareStyle_v1', 'favShareTheme_v1',
-    'gameItems_viewMode', 'gameItems_gridCols', 'lastRandomCoord_v1'
+    'gameItems_viewMode', 'gameItems_gridCols', 'lastRandomCoord_v1',
+    // 🛒 カテゴリ別ウィッシュリスト（profiles.js の getWishIds()/nsKey('wish_'+catKey) 参照。
+    // 上のgameItems_*と同じ12カテゴリ分）
+    'wish_outfit', 'wish_shoes', 'wish_mask', 'wish_face_accessory', 'wish_necklace',
+    'wish_hairstyle', 'wish_hair_accessory', 'wish_head_accessory', 'wish_cape',
+    'wish_portable_item', 'wish_large_placeable', 'wish_small_placeable',
+    // 📍 マイコーデの保存座標／🖼️ クローゼットのコラージュ（index.html参照）
+    'myCoords', 'closetCollages_v1',
+    // 📝 入手記録：季節精霊イベント入手ログ・課金アイテムの入手経緯・キャンドル課金の
+    // 実額換算モード・プレゼント履歴とその表示モード・キャンドルパック購入ログと
+    // その表示モード（item_cost.html参照。いずれもnsKey()経由でプロフィール別）
+    'moneyAcquireMode_v1', 'candleMoneyMode_v1', 'itemAcquireLog_v1',
+    'giftHistory_v1', 'giftDisplayMode_v1', 'candlePurchaseLog_v1', 'candleDisplayMode_v1',
+    // 🖼️ コーデ画像の書き出しスタイル・共有時に添える任意のユーザーID（index.html参照）
+    'coordShareStyle_v1', 'shareUserId_v1',
+    // 🔔 ダッシュボードのカウントダウン通知リマインダー（オン/オフ・通知間隔・通知済み
+    // 記録）。profiles.js参照。nsKey()を経由しないグローバルキーだが、上のgameItems_viewMode/
+    // gridColsと同じ理由でこの並びにそのまま含める。
+    'sky_dash_reminder_enabled', 'sky_dash_reminder_minutes', 'sky_dash_reminder_notified_v1'
   ]},
   { id: 'wings', label: '🪽 羽トラッカー', labelEn: '🪽 Wing Tracker', namespaced: true, keys: [
-    'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1'
+    'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1',
+    'wingsShareCustomize_v1' // 🎨 共有画像のテーマカスタマイズ（index.html参照）
   ]},
   { id: 'companion', label: '✨ 精霊同行ツール', labelEn: '✨ Spirit Companion Tool', namespaced: true, keys: [
     'sky_companion_v4_data', 'sky_companion_records_meta_v1'
   ]},
   { id: 'star-candle', label: '🕯️ 星のキャンドル計算機', labelEn: '🕯️ Star Candle Calculator', namespaced: true, keys: [
-    'skyStarCandleCalc_v1', 'skyStarCandleCalc_checkedDays_v1', 'skyStarCandleCalc_history_v1'
+    'skyStarCandleCalc_v1', 'skyStarCandleCalc_checkedDays_v1', 'skyStarCandleCalc_history_v1',
+    // 🔭 予報の高確度のみ表示フィルタ／🔔 赤闇シャード・達成予定日の通知オン・オフと
+    // 直近通知済みの記録（index.html参照。いずれもnsKey()経由でプロフィール別）
+    'skyStarCandleForecastFilterHigh_v1', 'skyStarCandleNotifyShardOn_v1', 'skyStarCandleNotifyGoalOn_v1',
+    'skyStarCandleNotifyShardLast_v1', 'skyStarCandleNotifyGoalLast_v1'
   ]},
   { id: 'nomacan', label: '🕯️ ノマキャン計算機', labelEn: '🕯️ Nomacan Calculator', namespaced: true, keys: [
     'skyNomacanCalc_v1', 'skyNomacanCalc_history_v1', 'skyNomacanGoals_v1'
@@ -748,7 +829,8 @@ const SITE_CATALOG = [
   // エクスポート/インポートの対象キーとしてはそのまま扱う（PROFILE_REGISTRY_KEYSと
   // 同様、選択UIを介さず常に一緒に処理する）。
   { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', labelEn: '🌳 Spirit Tree Manager', namespaced: true, hidden: true, keys: [
-    'spiritCatalogUnlocked_v1'
+    'spiritCatalogUnlocked_v1',
+    'catalogShareCustomize_v1' // 🎨 共有画像のテーマカスタマイズ（index.html参照）
   ]},
   // 🎵 楽譜づくり（tai-score）も精霊ツリー管理と同様、まだ一般公開しておらず
   // 他サイトのサイドバーからもリンクを外している（未完成のため）ので hidden:true
@@ -764,6 +846,20 @@ const SITE_CATALOG = [
     'sky_tracker_storage_v3', 'sky_shard_sync_date', 'sky_skill_answered', 'sky_skill_level_key',
     'sky_current_time_mult', 'sky_area_view_mode', 'sky_atlas_bg_opacity'
   ]},
+  // 🏠 ホーム画面アイコン設定（サイト別）: 「ホーム画面に追加」時のアイコン（絵文字＋背景色／
+  // アップロード画像）を各サイトごとに `pfCustomHomeIcon_v1__site_<siteId>` というキーで保存
+  // する仕組み（プロフィール別ではなくサイト別の名前空間。<siteId>は各サイトのpfSiteId()が
+  // 返す実際の公開URLパスの先頭セグメント）。プロフィール（保存枠）ごとの通常の
+  // namespaced:trueな仕組みとは別物のため、専用のカタログ行として1件にまとめる
+  // （item/companion/wings/star-candle/tai-nomacan/tai-emote/spirit-catalog/tai-infoの
+  // 各index.html・profiles.jsで実装コードを確認済み。shareは未対応で無印の
+  // 'pfCustomHomeIcon_v1'のまま＝対象外）。
+  { id: 'homeIcon', label: '🏠 ホーム画面アイコン設定（サイト別）', labelEn: '🏠 Home Screen Icon (Per Site)', namespaced: false, keys: [
+    'pfCustomHomeIcon_v1__site_tai-item', 'pfCustomHomeIcon_v1__site_companion',
+    'pfCustomHomeIcon_v1__site_wings', 'pfCustomHomeIcon_v1__site_star-candle',
+    'pfCustomHomeIcon_v1__site_tai-nomacan', 'pfCustomHomeIcon_v1__site_tai-emote',
+    'pfCustomHomeIcon_v1__site_tai-catalog', 'pfCustomHomeIcon_v1__site_tai-info'
+  ]},
 ];
 
 function siteLabel(site) {
@@ -773,20 +869,153 @@ function siteLabel(site) {
 // （個別データだけ引き継いでプロフィール一覧が無いと、切り替え表示がおかしくなるため）。
 const PROFILE_REGISTRY_KEYS = ['skyProfiles_v1', 'skyActiveProfile_v1'];
 
+// 🔀 プロフィール一覧(skyProfiles_v1)のマージ処理。
+// 以前は取り込んだ内容でこの端末の一覧を単純に上書きしていたため、取り込み元に
+// 無い（＝この端末だけで作った）プロフィールが一覧から消え、そのデータ本体
+// （各サイトの nsKey() 付きキー）はlocalStorageに残ったままUIから操作不能になる、
+// という実データロスがあった（bug #1）。id で突き合わせて和集合を取り、両方に
+// 同じidが存在する場合はこの端末側の内容を優先する（この端末で最近リネーム／色変更
+// した内容が、古い引き継ぎコードの読み込みで意図せず巻き戻るのを防ぐため）。
+function previewProfileMerge(importedData) {
+  let localList = [];
+  try { localList = JSON.parse(localStorage.getItem(PROFILE_REGISTRY_KEYS[0])) || []; } catch (e) { localList = []; }
+  if (!Array.isArray(localList)) localList = [];
+  let importedList = [];
+  const raw = importedData ? importedData[PROFILE_REGISTRY_KEYS[0]] : undefined;
+  if (raw !== undefined) {
+    try { importedList = JSON.parse(raw) || []; } catch (e) { importedList = []; }
+  }
+  if (!Array.isArray(importedList)) importedList = [];
+  const localIds = new Set(localList.map(p => p && p.id));
+  const newProfiles = importedList.filter(p => p && typeof p.id === 'string' && !localIds.has(p.id));
+  return { localList, importedList, newProfiles, hasImportedRegistry: raw !== undefined };
+}
+function applyProfileMerge(importedData) {
+  const { localList, newProfiles, hasImportedRegistry } = previewProfileMerge(importedData);
+  const mergedList = localList.concat(newProfiles);
+  let count = 0;
+  if (hasImportedRegistry) {
+    localStorage.setItem(PROFILE_REGISTRY_KEYS[0], JSON.stringify(mergedList));
+    count++;
+  }
+  // アクティブなプロフィールのポインタは、この端末で既に選択済みならそれを尊重して
+  // 上書きしない（インポートのたびに、勝手にアクティブなプロフィールが切り替わって
+  // しまうのを防ぐため）。この端末にまだ無い場合のみ取り込み側の値を採用する
+  // （マージ後の一覧に実在するIDである場合に限り、存在しないプロフィールを指さない
+  // ようにする）。
+  const activeKey = PROFILE_REGISTRY_KEYS[1];
+  const importedActive = importedData ? importedData[activeKey] : undefined;
+  if (localStorage.getItem(activeKey) === null && importedActive !== undefined && mergedList.some(p => p && p.id === importedActive)) {
+    localStorage.setItem(activeKey, importedActive);
+    count++;
+  }
+  return { count, newProfiles };
+}
+// プロフィールの表示名を組み立てる（profiles.js の pfDisplayName() と同じ規則）。
+// isDefaultNameが立っている「メイン」プロフィールは、保存時の言語で翻訳済みの
+// 文字列がnameに入っていることがあるため使わず、現在の言語で改めて翻訳する。
+function profileDisplayName(p) {
+  if (p && p.isDefaultName) return LANG === 'en' ? 'Main' : 'メイン';
+  return (p && p.name) || (p && p.id) || '';
+}
+
 function getAllLocalStorageKeys() {
   const keys = [];
   for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
   return keys;
 }
+// 🔗 companion（精霊同行ツール）は、共有プロフィール一覧(skyProfiles_v1)を使う独自の
+// 複数記録UIを持つが、そのデータ本体キー（dataKeyForRecord()）は通常のnsKey()と違い
+// "<key>__" + レコードID をそのまま連結するだけで、区切りのアンダースコアを入れない。
+// 共有の仕組みで作成されたプロフィールのIDは通常 "p_"+タイムスタンプ+乱数（profiles.js
+// のcreateProfile()参照）だが、companion独自の追加レコードは生成時に区切りアンダースコア
+// 無しの "p"+タイムスタンプ+乱数（companion/index.html のgenerateRecordId()参照）を使う
+// ため、そのレコードのデータキーは "sky_companion_v4_data__p1a2b3c..." のように、
+// 通常の "__p_"（pの直後にもアンダースコア）ではなく "__p"（pの直後は無し）になる。
+// この命名ズレでデータが引き継ぎから漏れないよう、末尾のアンダースコアの有無を問わず
+// 「__p」で始まっていれば同一サイトのプロフィール／レコード別データとして扱う。
 function matchKeysForSite(site, keyPool) {
   return keyPool.filter(k => site.keys.some(prefix =>
-    site.namespaced ? (k === prefix || k.startsWith(prefix + '__p_')) : (k === prefix)
+    site.namespaced ? (k === prefix || k.startsWith(prefix + '__p')) : (k === prefix)
   ));
 }
 
 // ✅ エクスポート／インポート、両方のサイト選択チェックリスト共通の「全選択／全解除」処理
 function setAllSiteCheckboxes(selector, checked) {
   document.querySelectorAll(selector).forEach(cb => { cb.checked = checked; });
+}
+
+/* ================================================================
+   🕒 サイト別「最終更新」タイムスタンプ
+   localStorageの値そのものには更新日時が記録されていない（Web標準のAPIには
+   キー単位の更新日時を取得する手段が無い）ため、他サイトを一切変更せずに
+   このツール側だけで「前回このツールで見た内容と比べて変わったか」を
+   検知して積み上げていく方式をとる。サイトごとの現在の中身から軽量な
+   署名（ハッシュ）を作り、前回保存した署名と比較して、変わっていれば
+   updatedAtを「今」に更新する。導入前からある既存データについては、
+   このツールで最初に検知した時点が実質的な開始日時になる（それより前の
+   実際の変更日時までは遡れない）。
+   ================================================================ */
+const SITE_SNAPSHOT_KEY = 'dataTransferSiteSnapshot_v1'; // このツール自身の内部管理用キー（引き継ぎの対象キーには含めない）
+
+// djb2ベースの軽量な非暗号学的ハッシュ。衝突を完全には防げないが、
+// 「内容が変わったかどうか」を検知する用途には十分な精度で、かつ元の値を
+// 保持するよりずっとコンパクトに保存できる。
+function hashString(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) + h + str.charCodeAt(i)) | 0; // h*33 + c
+  }
+  return (h >>> 0).toString(36);
+}
+function computeSiteSignature(site, allKeys) {
+  const matched = matchKeysForSite(site, allKeys).sort();
+  return hashString(matched.map(k => k + '=' + localStorage.getItem(k)).join(''));
+}
+function loadSiteSnapshots() {
+  try {
+    const v = JSON.parse(localStorage.getItem(SITE_SNAPSHOT_KEY));
+    return (v && typeof v === 'object') ? v : {};
+  } catch (e) { return {}; }
+}
+function saveSiteSnapshots(map) {
+  try { localStorage.setItem(SITE_SNAPSHOT_KEY, JSON.stringify(map)); } catch (e) { /* 保存領域上限等は無視して表示だけ継続 */ }
+}
+
+// 全サイト（非公開のhidden:trueサイトも含む）の署名を現在のlocalStorageの中身で
+// 再計算し、前回と違っていれば（＝新規に検知したデータも含む）updatedAtを今の
+// 日時に更新する。データが無くなったサイトは記録を削除する。呼び出すたびに
+// 最新のスナップショットmapを返す（保存も行う）。
+function refreshSiteSnapshots() {
+  const allKeys = getAllLocalStorageKeys();
+  const snapshots = loadSiteSnapshots();
+  const nowIso = new Date().toISOString();
+  let changed = false;
+  SITE_CATALOG.forEach(site => {
+    const matched = matchKeysForSite(site, allKeys);
+    if (matched.length === 0) {
+      if (snapshots[site.id]) { delete snapshots[site.id]; changed = true; }
+      return;
+    }
+    const sig = computeSiteSignature(site, allKeys);
+    const prev = snapshots[site.id];
+    if (!prev || prev.sig !== sig) {
+      snapshots[site.id] = { sig, updatedAt: nowIso };
+      changed = true;
+    }
+  });
+  if (changed) saveSiteSnapshots(snapshots);
+  return snapshots;
+}
+
+function siteUpdatedAtLabel(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString(LANG === 'en' ? 'en-US' : 'ja-JP', {
+      year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  } catch (e) { return ''; }
 }
 
 /* ================================================================
@@ -914,10 +1143,20 @@ async function generateExportCode() {
     matchKeysForSite(site, allKeys).forEach(k => { dump[k] = localStorage.getItem(k); });
   });
 
+  // 🕒 送り出す時点の最新状態でサイト別スナップショットを更新し、コードに含める全サイト
+  // （非公開サイトも含む）の「最終更新」を埋め込む。取り込み側で「このコードの中身は
+  // いつ時点のものか」を判断・比較できるようにするため（インポート確認画面・上書き警告用）。
+  const snapshotsAtExport = refreshSiteSnapshots();
+  const siteUpdatedAt = {};
+  selectedIds.concat(SITE_CATALOG.filter(s => s.hidden).map(s => s.id)).forEach(id => {
+    if (snapshotsAtExport[id]) siteUpdatedAt[id] = snapshotsAtExport[id].updatedAt;
+  });
+
   const payload = {
     exportedFrom: 'taipak5000.github.io/tai-transfer/',
     exportedAt: new Date().toISOString(),
     sites: selectedIds,
+    siteUpdatedAt,
     data: dump
   };
   const json = JSON.stringify(payload);
@@ -932,7 +1171,7 @@ async function generateExportCode() {
     return;
   }
   lastExportCode = code;
-  lastExportResult = { selectedIds, keyCount: Object.keys(dump).length, codeLength: code.length, compressRate };
+  lastExportResult = { selectedIds, keyCount: Object.keys(dump).length, codeLength: code.length, compressRate, siteUpdatedAt };
 
   renderExportOutput();
   statusEl.className = 'status-msg';
@@ -957,8 +1196,22 @@ function renderExportOutput() {
         count: keyCount, length: codeLength.toLocaleString(), compressNote
       });
   const qrFeasible = codeLength <= QR_MAX_BYTES;
+  // 🕒 選んだサイトごとの「最終更新」一覧（このツールが検知した限りでの最新変更日時）。
+  // 古い引き継ぎコードを後から読み込む側が、中身の新しさを判断できるようにするため。
+  const updatedRows = selectedIds
+    .map(id => {
+      const site = SITE_CATALOG.find(s => s.id === id);
+      const iso = lastExportResult.siteUpdatedAt && lastExportResult.siteUpdatedAt[id];
+      return iso ? `<div class="site-updated-row"><span class="site-updated-name">${escapeHtml(site ? siteLabel(site) : id)}</span><span class="site-updated-date">${escapeHtml(siteUpdatedAtLabel(iso))}</span></div>` : '';
+    })
+    .filter(Boolean)
+    .join('');
+  const updatedListHtml = updatedRows
+    ? `<div class="status-msg" style="margin-top:10px; margin-bottom:2px;">${t('dyn.siteUpdatedListHeading')}</div><div class="site-updated-list">${updatedRows}</div>`
+    : '';
   outputEl.innerHTML = `
     <div class="status-msg">${summary}</div>
+    ${updatedListHtml}
     <button type="button" class="action-btn primary" onclick="downloadExportFile()">${t('dyn.downloadBtn')}</button>
     <button type="button" class="action-btn secondary" onclick="toggleExportTextarea()">${t('dyn.showCodeBtn')}</button>
     <div id="exportTextareaArea"></div>
@@ -1098,8 +1351,11 @@ async function renderExportQrArea() {
    📥 インポート（コード読み込み → サイト選択 → 復元）
    ================================================================ */
 let pendingImportData = null;
+let pendingImportSiteUpdatedAt = null; // { siteId: ISO日時, ... }（インポート元が生成した「サイト別最終更新」。導入前の古いコードには無い）
 let lastImportDetected = null; // array of matched SITE_CATALOG entries
 let lastImportDataKeys = null;
+let lastImportOverwriteInfo = null; // { visible, hiddenOverwriteCount, newProfiles, hasOverwriteRisk }（renderImportChecklist()で算出）
+let importOverwriteConfirming = false; // ⚠️ 上書きが発生する復元の2段階確認state
 
 async function loadCodeForImport() {
   const code = document.getElementById('importCodeInput').value.trim();
@@ -1130,8 +1386,11 @@ async function processImportCode(code) {
   statusEl.className = 'status-msg';
   statusEl.textContent = '';
   pendingImportData = null;
+  pendingImportSiteUpdatedAt = null;
   lastImportDetected = null;
   lastImportDataKeys = null;
+  lastImportOverwriteInfo = null;
+  importOverwriteConfirming = false;
   renderImportSiteArea();
 
   let payload;
@@ -1150,6 +1409,8 @@ async function processImportCode(code) {
   }
 
   pendingImportData = data;
+  // 🕒 コード作成側が埋め込んだ「サイト別最終更新」（機能追加前の古いコードには存在しない）
+  pendingImportSiteUpdatedAt = (payload.siteUpdatedAt && typeof payload.siteUpdatedAt === 'object') ? payload.siteUpdatedAt : {};
   const dataKeys = Object.keys(data);
   const detected = SITE_CATALOG.filter(site => matchKeysForSite(site, dataKeys).length > 0);
   if (detected.length === 0) {
@@ -1166,39 +1427,139 @@ async function processImportCode(code) {
   renderImportSiteArea();
 }
 
+// ⚠️ このインポートで「新しく追加される」のか「既にこの端末にデータがあり上書きされる」
+// のかを、サイト単位で判定する（bug #8: 上書き前の警告表示・feature #7: 最終更新の
+// 突き合わせで共用）。コード側埋め込みの最終更新（pendingImportSiteUpdatedAt）と、この
+// 端末側の最終更新（このツール自身のスナップショット、ここで最新の内容に合わせて
+// refreshしておく）を突き合わせ、ローカルの方が新しい場合は特に強調する。
+function computeImportOverwriteInfo() {
+  const currentLocalKeys = getAllLocalStorageKeys();
+  const localSnapshots = refreshSiteSnapshots();
+  const visible = (lastImportDetected || []).map(site => {
+    const hasLocalData = matchKeysForSite(site, currentLocalKeys).length > 0;
+    const localUpdatedAt = (hasLocalData && localSnapshots[site.id]) ? localSnapshots[site.id].updatedAt : null;
+    const importUpdatedAt = (pendingImportSiteUpdatedAt && pendingImportSiteUpdatedAt[site.id]) || null;
+    return { site, hasLocalData, localUpdatedAt, importUpdatedAt };
+  });
+  const hiddenOverwriteCount = SITE_CATALOG
+    .filter(s => s.hidden && matchKeysForSite(s, lastImportDataKeys || []).length > 0)
+    .filter(site => matchKeysForSite(site, currentLocalKeys).length > 0)
+    .length;
+  const { newProfiles } = previewProfileMerge(pendingImportData || {});
+  return {
+    visible,
+    hiddenOverwriteCount,
+    newProfiles,
+    hasOverwriteRisk: visible.some(v => v.hasLocalData) || hiddenOverwriteCount > 0
+  };
+}
+
+// ⚠️ 上書き・新規プロフィール追加の内訳ボックス。警告すべき内容が無ければ空文字を返す。
+function renderImportWarningBoxHtml(info) {
+  if (!info) return '';
+  const overwriteRows = info.visible.filter(v => v.hasLocalData).map(({ site, localUpdatedAt, importUpdatedAt }) => {
+    let text = escapeHtml(siteLabel(site));
+    if (importUpdatedAt) {
+      const openParen = LANG === 'en' ? ' (' : '（';
+      const closeParen = LANG === 'en' ? ')' : '）';
+      text += `${openParen}${t('dyn.importCodeDateLabel')}: ${escapeHtml(siteUpdatedAtLabel(importUpdatedAt))}`;
+      if (localUpdatedAt) {
+        text += ` / ${t('dyn.importLocalDateLabel')}: ${escapeHtml(siteUpdatedAtLabel(localUpdatedAt))}`;
+        if (localUpdatedAt > importUpdatedAt) text += t('dyn.importLocalNewerFlag');
+      }
+      text += closeParen;
+    }
+    return `<div class="site-updated-row overwrite"><span class="site-updated-name">${text}</span></div>`;
+  }).join('');
+
+  const parts = [];
+  if (overwriteRows) {
+    parts.push(`<div>${t('dyn.overwriteSitesLabel')}</div><div class="site-updated-list">${overwriteRows}</div>`);
+    if (info.hiddenOverwriteCount > 0) parts.push(`<div>${t('dyn.overwriteHiddenNote', { n: info.hiddenOverwriteCount })}</div>`);
+  } else if (info.hiddenOverwriteCount > 0) {
+    parts.push(`<div>${t('dyn.overwriteHiddenOnlyLabel', { n: info.hiddenOverwriteCount })}</div>`);
+  }
+  if (info.newProfiles.length > 0) {
+    const names = info.newProfiles.map(p => escapeHtml(profileDisplayName(p))).join(LANG === 'en' ? ', ' : '、');
+    parts.push(`<div>${t('dyn.newProfilesLabel', { n: info.newProfiles.length, names })}</div>`);
+  }
+  if (parts.length === 0) return '';
+  return `<div class="import-warning-box">${parts.join('')}</div>`;
+}
+
 function renderImportSiteArea() {
+  renderImportChecklist();
+  renderImportConfirmArea();
+}
+
+function renderImportChecklist() {
   const siteAreaEl = document.getElementById('importSiteArea');
-  const confirmAreaEl = document.getElementById('importConfirmArea');
   if (!lastImportDetected || !lastImportDataKeys) {
     siteAreaEl.innerHTML = '';
-    confirmAreaEl.innerHTML = '';
+    lastImportOverwriteInfo = null;
     return;
   }
+
+  lastImportOverwriteInfo = computeImportOverwriteInfo();
+  const warningHtml = renderImportWarningBoxHtml(lastImportOverwriteInfo);
+
   if (lastImportDetected.length === 0) {
     // 🌳 コードに含まれるのが非公開（hidden）サイトのデータのみの場合、選べる項目が
     // 無いのに「復元するサイトを選んでください」ヘッダーや、空の0件チェックリスト＋
-    // 動作する全選択/全解除ピルを表示するのは不自然。専用の説明文だけを表示し、
-    // 復元自体はconfirmImport()側でhiddenSitesとして常に行われるため、確認ボタンは
-    // 通常どおり表示する。
-    siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.hiddenOnlyImportNotice')}</div>`;
-    confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="confirmImport()">${t('dyn.restoreBtn')}</button>`;
+    // 動作する全選択/全解除ピルを表示するのは不自然。専用の説明文だけを表示する
+    // （復元自体はconfirmImport()側でhiddenSitesとして常に行われる）。
+    siteAreaEl.innerHTML = warningHtml + `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.hiddenOnlyImportNotice')}</div>`;
     return;
   }
-  siteAreaEl.innerHTML = `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
+
+  siteAreaEl.innerHTML = warningHtml +
+    `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
     `<div class="list-select-row">
       <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', true)">${t('page.selectAllBtn')}</button>
       <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', false)">${t('page.selectNoneBtn')}</button>
     </div>` +
-    lastImportDetected.map(site => {
+    lastImportOverwriteInfo.visible.map(({ site, hasLocalData }) => {
       const matched = matchKeysForSite(site, lastImportDataKeys);
       return `
         <label class="site-opt">
           <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked>
           <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
-          <span class="site-opt-count">${t('dyn.keysCount', { n: matched.length })}</span>
+          <span class="site-opt-count">${t('dyn.keysCount', { n: matched.length })}${hasLocalData ? ' ⚠️' : ''}</span>
         </label>`;
     }).join('');
-  confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="confirmImport()">${t('dyn.restoreBtn')}</button>`;
+}
+
+// ⚠️ 上書きが発生する場合は、確認ボタンの1クリックでは即実行せず、詳細説明＋2回目の
+// 明示クリックを要求する2段階確認にする（item/profiles.jsのdmStartWipe/dmConfirmWipe
+// と同じ既存パターンに倣う）。上書きが無い（純粋な新規追加のみの）場合は、従来どおり
+// 1クリックでそのまま復元する。
+// チェックボックスの状態を保持するため、この確認state変更ではimportSiteAreaを
+// 再描画しない（renderImportChecklist()は呼ばず、confirmAreaElのみ更新する）。
+function renderImportConfirmArea() {
+  const confirmAreaEl = document.getElementById('importConfirmArea');
+  if (!lastImportDetected || !lastImportDataKeys) {
+    confirmAreaEl.innerHTML = '';
+    return;
+  }
+  if (importOverwriteConfirming) {
+    confirmAreaEl.innerHTML = `
+      <div class="import-overwrite-confirm">
+        <div>${t('dyn.importOverwriteConfirmText')}</div>
+        <button type="button" class="action-btn danger" onclick="confirmImport()">${t('dyn.importOverwriteConfirmBtn')}</button>
+        <button type="button" class="action-btn secondary" onclick="importCancelOverwriteConfirm()">${t('dyn.cancelBtn')}</button>
+      </div>`;
+    return;
+  }
+  const hasRisk = !!(lastImportOverwriteInfo && lastImportOverwriteInfo.hasOverwriteRisk);
+  confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="${hasRisk ? 'importRestoreClicked()' : 'confirmImport()'}">${t('dyn.restoreBtn')}</button>`;
+}
+function importRestoreClicked() {
+  importOverwriteConfirming = true;
+  renderImportConfirmArea();
+}
+function importCancelOverwriteConfirm() {
+  importOverwriteConfirming = false;
+  renderImportConfirmArea();
 }
 
 function confirmImport() {
@@ -1215,9 +1576,10 @@ function confirmImport() {
   }
 
   let count = 0;
-  PROFILE_REGISTRY_KEYS.forEach(k => {
-    if (pendingImportData[k] !== undefined) { localStorage.setItem(k, pendingImportData[k]); count++; }
-  });
+  // 🔀 プロフィール一覧・アクティブポインタは単純上書きせず、既存の登録内容とマージする
+  // （bug #1）。
+  const { count: registryCount, newProfiles } = applyProfileMerge(pendingImportData);
+  count += registryCount;
   selectedIds.forEach(id => {
     const site = SITE_CATALOG.find(s => s.id === id);
     matchKeysForSite(site, dataKeys).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
@@ -1229,13 +1591,19 @@ function confirmImport() {
   });
 
   statusEl.className = 'status-msg ok';
-  statusEl.textContent = t('dyn.restoreSuccess', { n: count });
+  statusEl.textContent = t('dyn.restoreSuccess', { n: count }) + (newProfiles.length > 0
+    ? ' ' + t('dyn.restoreSuccessNewProfiles', { n: newProfiles.length, names: newProfiles.map(profileDisplayName).join(LANG === 'en' ? ', ' : '、') })
+    : '');
   pendingImportData = null;
+  pendingImportSiteUpdatedAt = null;
   lastImportDetected = null;
   lastImportDataKeys = null;
+  lastImportOverwriteInfo = null;
+  importOverwriteConfirming = false;
   document.getElementById('importSiteArea').innerHTML = '';
   document.getElementById('importConfirmArea').innerHTML = '';
   document.getElementById('importCodeInput').value = '';
+  refreshSiteSnapshots(); // 🕒 インポートで書き込んだ内容を、このツールの「最終更新」把握にも反映する
   renderExportSiteList(); // インポートで書き込んだデータを、エクスポート側のチェックリスト/件数へ即反映する
   resetExportOutput(); // インポート前に作成済みだったエクスポートコードは新データを含まず古くなるため破棄する
 }
@@ -1245,6 +1613,7 @@ function confirmImport() {
    ================================================================ */
 applyI18n();
 applyThemeToDOM();
+refreshSiteSnapshots(); // 🕒 このツールの「最終更新」把握を、今この端末にある最新の中身に合わせて更新する
 renderExportSiteList();
 </script>
 </body>
