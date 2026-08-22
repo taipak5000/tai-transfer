@@ -168,6 +168,18 @@
     .status-msg.ok { color: var(--green); }
     .status-msg.err { color: var(--red); }
 
+    /* 🕒 エクスポートカード上部の「最終バックアップ」リマインダー。エクスポートを
+       実行しなくても常時見える、持続的なステータス行（.hintの直後・操作ボタンより
+       前に置き、バックアップ状況を選択リストより先に目に入るようにする）。
+       一度もバックアップが無い場合(.never)は警告色ではなく--purpleで「まだ危険」
+       ではなく「やってみよう」という前向きなトーンにする。 */
+    .last-export-reminder {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm);
+      padding: 8px 12px; margin-bottom: 14px; font-size: 12.5px; color: var(--text-2); line-height: 1.6;
+    }
+    .last-export-reminder.never { border-color: var(--purple); color: var(--purple-d); }
+
     /* 🕒 エクスポート結果／インポート確認画面の「サイト別 最終更新」内訳リスト */
     .site-updated-list { margin-top: 8px; }
     .site-updated-row {
@@ -322,6 +334,7 @@
     <p class="sec-label" id="exportSection" data-i18n="page.sectionExport"></p>
     <div class="card">
       <div class="hint" data-i18n="page.exportHint"></div>
+      <div id="lastExportReminder" class="last-export-reminder"></div>
       <div class="list-select-row">
         <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', true)" data-i18n="page.selectAllBtn"></button>
         <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', false)" data-i18n="page.selectNoneBtn"></button>
@@ -514,7 +527,11 @@ const I18N = {
     'dyn.importOverwriteConfirmText': '本当に上書きしてよろしいですか？この操作は取り消せません。心配な場合は、先に「エクスポート」で現在のデータをバックアップしておくことをおすすめします。',
     'dyn.importOverwriteConfirmBtn': '⚠️ 上書きして復元する',
     'dyn.cancelBtn': '取消',
-    'dyn.restoreSuccessNewProfiles': '新しいプロフィールも{n}件追加されました：{names}'
+    'dyn.restoreSuccessNewProfiles': '新しいプロフィールも{n}件追加されました：{names}',
+    'dyn.lastExportNever': '💡 まだバックアップがありません。下の「コードを作成」で最初のバックアップを作っておきましょう。',
+    'dyn.lastExportToday': '🕒 最終バックアップ：今日',
+    'dyn.lastExportYesterday': '🕒 最終バックアップ：1日前',
+    'dyn.lastExportDaysAgo': '🕒 最終バックアップ：{n}日前'
   },
   en: {
     'page.title': 'Data Transfer - Sky Collection Tracker',
@@ -598,7 +615,11 @@ const I18N = {
     'dyn.importOverwriteConfirmText': "Are you sure you want to overwrite? This cannot be undone. If you're unsure, we recommend backing up your current data with \"Export\" first.",
     'dyn.importOverwriteConfirmBtn': '⚠️ Overwrite and Restore',
     'dyn.cancelBtn': 'Cancel',
-    'dyn.restoreSuccessNewProfiles': vars => ` ${vars.n} new ${vars.n === 1 ? 'profile was' : 'profiles were'} also added: ${vars.names}`
+    'dyn.restoreSuccessNewProfiles': vars => ` ${vars.n} new ${vars.n === 1 ? 'profile was' : 'profiles were'} also added: ${vars.names}`,
+    'dyn.lastExportNever': '💡 No backup yet. Create your first one below with "Create Code".',
+    'dyn.lastExportToday': '🕒 Last backup: today',
+    'dyn.lastExportYesterday': '🕒 Last backup: 1 day ago',
+    'dyn.lastExportDaysAgo': vars => `🕒 Last backup: ${vars.n} days ago`
   }
 };
 
@@ -651,6 +672,7 @@ function setLang(lang) {
   renderExportSiteList();
   renderExportOutput();
   renderImportSiteArea();
+  renderLastExportReminder(); // 「最終バックアップ」リマインダーの文言も、言語切替時に更新する
   syncSettingsLangButtons();
 }
 
@@ -1019,6 +1041,50 @@ function siteUpdatedAtLabel(iso) {
 }
 
 /* ================================================================
+   🕒 「最終バックアップ」リマインダー
+   エクスポート（引き継ぎコード作成）が成功するたびに、その日時をこの端末だけの
+   記録として保存する。上のサイト別スナップショットと違い引き継ぎの対象キーでは
+   ないため、他サイトのキーと衝突しない専用プレフィックス（dataTransfer…）を使い、
+   SITE_CATALOGのどのsite.keysにもマッチしないことでエクスポート内容から自動的に
+   除外される（= この記録自体が引き継がれることはない。端末ごとの実績として扱う）。
+   ================================================================ */
+const LAST_EXPORT_KEY = 'dataTransferLastExportAt_v1'; // このツール自身の内部管理用キー（引き継ぎの対象キーには含めない）
+
+function getLastExportAt() {
+  try { return localStorage.getItem(LAST_EXPORT_KEY); } catch (e) { return null; }
+}
+function recordLastExportAt() {
+  try { localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString()); } catch (e) { /* 保存領域上限等は無視してエクスポート自体は継続する */ }
+}
+
+// 「今日」「1日前」「N日前」の判定は、経過ミリ秒ではなくローカルの暦日の差分で行う
+// （例：昨日23:58にバックアップし今日0:02に開いた場合、経過時間は4分でも「1日前」と
+// 表示する方が直感に合うため）。
+function lastExportDaysAgoLabel(iso) {
+  const then = new Date(iso);
+  if (isNaN(then.getTime())) return null;
+  const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(then)) / 86400000);
+  if (diffDays <= 0) return t('dyn.lastExportToday');
+  if (diffDays === 1) return t('dyn.lastExportYesterday');
+  return t('dyn.lastExportDaysAgo', { n: diffDays });
+}
+
+function renderLastExportReminder() {
+  const el = document.getElementById('lastExportReminder');
+  if (!el) return;
+  const iso = getLastExportAt();
+  const label = iso ? lastExportDaysAgoLabel(iso) : null;
+  if (!label) {
+    el.className = 'last-export-reminder never';
+    el.textContent = t('dyn.lastExportNever');
+    return;
+  }
+  el.className = 'last-export-reminder';
+  el.textContent = label;
+}
+
+/* ================================================================
    コードの圧縮/展開 + Base64（UTF-8セーフ）
    「コードが長すぎる」というフィードバックを受けて、JSON文字列をgzip圧縮
    （CompressionStream、外部ライブラリ不要）してからBase64化し、コードの
@@ -1172,6 +1238,12 @@ async function generateExportCode() {
   }
   lastExportCode = code;
   lastExportResult = { selectedIds, keyCount: Object.keys(dump).length, codeLength: code.length, compressRate, siteUpdatedAt };
+
+  // 🕒 引き継ぎコードの作成に成功した時点を「バックアップ完了」として記録する
+  // （ダウンロード/コピー/QR表示はコードを取り出す手段の違いに過ぎず、バックアップ
+  // そのものはここで完了している）。
+  recordLastExportAt();
+  renderLastExportReminder();
 
   renderExportOutput();
   statusEl.className = 'status-msg';
@@ -1615,6 +1687,7 @@ applyI18n();
 applyThemeToDOM();
 refreshSiteSnapshots(); // 🕒 このツールの「最終更新」把握を、今この端末にある最新の中身に合わせて更新する
 renderExportSiteList();
+renderLastExportReminder(); // 🕒 「最終バックアップ」リマインダーを初期表示する
 </script>
 </body>
 </html>
