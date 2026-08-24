@@ -144,6 +144,22 @@
        「データ無し」を伝える。 */
     .site-opt.no-data .site-opt-label { color: var(--text-2); }
 
+    /* 🆕 サイト単位ではなくプロフィール単位で引き継ぎを絞り込むための、エクスポート
+       サイト一覧の各行に紐づく任意のプロフィール選択行（同じ端末に複数のプロフィール
+       （保存枠）が登録されている場合のみ表示。1件のみ／未登録の場合は表示自体を省略する）。
+       この行が付く.site-optは下線をこちらに付け替える（連続する2行をまとめて1つの
+       「サイト」として区切るため）。 */
+    .site-opt.has-profile-filter { border-bottom: none; padding-bottom: 4px; }
+    .site-opt-profile-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 4px 9px 32px; border-bottom: 0.5px solid var(--sep);
+    }
+    .site-opt-profile-row:last-child { border-bottom: none; }
+    .site-profile-filter {
+      flex: 1; min-width: 0; font-size: 12.5px; color: var(--text); background: var(--bg);
+      border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px;
+    }
+
     /* ✅ 各サイト選択リスト共通の「全選択／全解除」行（wingsの.area-btnに倣った
        ピル型の小さいテキストボタン）。エクスポート側は静的HTML、インポート側は
        復元候補サイトが判明してから動的に描画される。 */
@@ -186,6 +202,18 @@
     }
     .last-export-reminder.never { border-color: var(--purple); color: var(--purple-d); }
 
+    /* 🕒 直近の書き出し/読込履歴ログ（last-export-reminderの下に配置。既定は折りたたみで、
+       トグルボタンは既存の.list-select-btn（ピル型の小さいテキストボタン）をそのまま流用する） */
+    .transfer-history-list { margin-bottom: 10px; }
+    .transfer-history-row {
+      display: flex; align-items: baseline; gap: 8px; padding: 6px 0;
+      border-bottom: 0.5px solid var(--sep); font-size: 12px; color: var(--text-2); line-height: 1.6;
+    }
+    .transfer-history-row:last-child { border-bottom: none; }
+    .transfer-history-icon { flex-shrink: 0; }
+    .transfer-history-date { flex-shrink: 0; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
+    .transfer-history-sites { flex: 1; min-width: 0; }
+
     /* 🕒 エクスポート結果／インポート確認画面の「サイト別 最終更新」内訳リスト */
     .site-updated-list { margin-top: 8px; }
     .site-updated-row {
@@ -213,6 +241,10 @@
        ワントーン濃い赤(#D70015・白文字で約5.38:1、AA適合)を使う。--redトークン
        自体は他の既存箇所に影響するため変更しない。 */
     .import-overwrite-confirm .action-btn.danger { background: #D70015; color: #fff; }
+
+    /* 📊 上書き警告内の「内容差分」の一言要約（.site-updated-row.overwriteの直後に置く、
+       既存トークンのみを使う小さな補足テキスト） */
+    .site-diff-note { font-size: 11.5px; color: var(--text-2); padding: 0 0 6px; line-height: 1.6; }
 
     /* 📱 QRコード表示パネル。スキャン用途のため、ダークモードでも背景は
        意図的に固定の白（テーマトークンを使わない）にしている。QRコードは
@@ -341,6 +373,8 @@
     <div class="card">
       <div class="hint" data-i18n="page.exportHint"></div>
       <div id="lastExportReminder" class="last-export-reminder"></div>
+      <button type="button" class="list-select-btn" id="transferHistoryToggleBtn" onclick="toggleTransferHistory()" style="display:none; margin-bottom:10px;"></button>
+      <div id="transferHistoryArea"></div>
       <div class="list-select-row">
         <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', true)" data-i18n="page.selectAllBtn"></button>
         <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', false)" data-i18n="page.selectNoneBtn"></button>
@@ -539,7 +573,26 @@ const I18N = {
     'dyn.lastExportNever': '💡 まだバックアップがありません。下の「コードを作成」で最初のバックアップを作っておきましょう。',
     'dyn.lastExportToday': '🕒 最終バックアップ：今日',
     'dyn.lastExportYesterday': '🕒 最終バックアップ：1日前',
-    'dyn.lastExportDaysAgo': '🕒 最終バックアップ：{n}日前'
+    'dyn.lastExportDaysAgo': '🕒 最終バックアップ：{n}日前',
+    'page.allProfilesOption': 'すべてのプロフィール',
+    'page.profileFilterAriaLabel': '{site}の引き継ぎプロフィールを絞り込む',
+    'dyn.diffSummaryPrefix': '📊 内容差分：',
+    'dyn.diffEntriesAdded': '新規データ{n}件',
+    'dyn.diffTitlesAdded': '称号{n}件を新たに獲得',
+    'dyn.diffEntriesChanged': '{n}件の内容が変化',
+    'dyn.diffEntriesRemoved': 'ローカルのみのデータ{n}件は消えます',
+    'dyn.showLinkBtn': '🔗 リンクとしてコピー',
+    'dyn.copyLinkBtn': '🔗 リンクをコピー',
+    'dyn.copyLinkSuccess': 'リンクをコピーしました。別の端末でこのリンクを開くと、コードが自動で読み込まれます。',
+    'dyn.copyLinkFailed': 'コピーに失敗しました。リンクが選択された状態なので、手動でコピーしてください。',
+    'dyn.linkTooLongNote': '⚠️ リンクが長くなっています。開く環境によってはうまく機能しない場合があります。心配な場合はファイルまたはQRコードもご利用ください。',
+    'dyn.linkAutoLoadedNotice': '🔗 リンクからコードを読み込みました。復元したいサイトを選んでください。',
+    'dyn.showHistoryBtn': '🕒 書き出し/読込履歴を見る',
+    'dyn.hideHistoryBtn': '🕒 履歴を隠す',
+    'dyn.historyHiddenNote': '非公開ツール{n}件',
+    'dyn.historyNoSites': '（サイトなし）',
+    'dyn.historyExportRowLabel': '書き出し：{date}・{sites}',
+    'dyn.historyImportRowLabel': '読込：{date}・{sites}'
   },
   en: {
     'page.title': 'Data Transfer - Sky Collection Tracker',
@@ -629,7 +682,26 @@ const I18N = {
     'dyn.lastExportNever': '💡 No backup yet. Create your first one below with "Create Code".',
     'dyn.lastExportToday': '🕒 Last backup: today',
     'dyn.lastExportYesterday': '🕒 Last backup: 1 day ago',
-    'dyn.lastExportDaysAgo': vars => `🕒 Last backup: ${vars.n} days ago`
+    'dyn.lastExportDaysAgo': vars => `🕒 Last backup: ${vars.n} days ago`,
+    'page.allProfilesOption': 'All profiles',
+    'page.profileFilterAriaLabel': 'Filter transferred profile for {site}',
+    'dyn.diffSummaryPrefix': '📊 Content diff: ',
+    'dyn.diffEntriesAdded': vars => `${vars.n} new ${vars.n === 1 ? 'entry' : 'entries'}`,
+    'dyn.diffTitlesAdded': vars => `${vars.n} new ${vars.n === 1 ? 'title' : 'titles'}`,
+    'dyn.diffEntriesChanged': vars => `${vars.n} ${vars.n === 1 ? 'entry' : 'entries'} changed`,
+    'dyn.diffEntriesRemoved': vars => `${vars.n} local-only ${vars.n === 1 ? 'entry' : 'entries'} would be lost`,
+    'dyn.showLinkBtn': '🔗 Copy as Link',
+    'dyn.copyLinkBtn': '🔗 Copy Link',
+    'dyn.copyLinkSuccess': 'Link copied. Opening it on another device will load the code automatically.',
+    'dyn.copyLinkFailed': 'Copy failed. The link is selected, so please copy it manually.',
+    'dyn.linkTooLongNote': "⚠️ This link is quite long. It may not work well in some apps — consider the file or QR code options if you're concerned.",
+    'dyn.linkAutoLoadedNotice': '🔗 Code loaded from a link. Select the sites you want to restore.',
+    'dyn.showHistoryBtn': '🕒 View Transfer History',
+    'dyn.hideHistoryBtn': '🕒 Hide History',
+    'dyn.historyHiddenNote': vars => `${vars.n} private ${vars.n === 1 ? 'tool' : 'tools'}`,
+    'dyn.historyNoSites': '(no sites)',
+    'dyn.historyExportRowLabel': 'Export: {date} · {sites}',
+    'dyn.historyImportRowLabel': 'Import: {date} · {sites}'
   }
 };
 
@@ -683,6 +755,7 @@ function setLang(lang) {
   renderExportOutput();
   renderImportSiteArea();
   renderLastExportReminder(); // 「最終バックアップ」リマインダーの文言も、言語切替時に更新する
+  renderTransferHistory(); // 書き出し/読込履歴ログの文言・サイト名・日時表記も、言語切替時に更新する
   syncSettingsLangButtons();
 }
 
@@ -1018,10 +1091,12 @@ function applyProfileMerge(importedData) {
   return { count, newProfiles };
 }
 // プロフィールの表示名を組み立てる（profiles.js の pfDisplayName() と同じ規則）。
-// isDefaultNameが立っている「メイン」プロフィールは、保存時の言語で翻訳済みの
-// 文字列がnameに入っていることがあるため使わず、現在の言語で改めて翻訳する。
+// id==='default'かつnameが初期値の「メイン」のまま（＝未改名）のプロフィールは、
+// 現在の言語で改めて翻訳する（profiles.js側は `p.id === DEFAULT_PROFILE_ID && p.name === 'メイン'`
+// で判定しており、実データに存在しない`isDefaultName`フィールドを見ていたため常にfalseに
+// なってしまっていた。ユーザーが改名した場合はそのままp.nameを表示する）。
 function profileDisplayName(p) {
-  if (p && p.isDefaultName) return LANG === 'en' ? 'Main' : 'メイン';
+  if (p && p.id === 'default' && p.name === 'メイン') return LANG === 'en' ? 'Main' : 'メイン';
   return (p && p.name) || (p && p.id) || '';
 }
 
@@ -1044,6 +1119,35 @@ function matchKeysForSite(site, keyPool) {
   return keyPool.filter(k => site.keys.some(prefix =>
     site.namespaced ? (k === prefix || k.startsWith(prefix + '__p')) : (k === prefix)
   ));
+}
+
+// 🆕 サイト単位ではなくプロフィール単位での引き継ぎ絞り込み用：あるrawKeyが、指定した
+// "1つの"プロフィールIDちょうどに属するキーかどうかを判定する。通常のnsKey()は
+// "<rawKey>__p_<id>" の形式だが、companion（精霊同行ツール）独自の追加レコードは
+// dataKeyForRecord()により "<rawKey>__<id>"（id自体が"p"始まりの独自形式のため、
+// 見た目上は"__p..."になる）という別の区切り方をする（matchKeysForSite()上部のコメント
+// 参照）。ここでは両方の具体的な区切り方を許容し、末尾が"id"ちょうどで終わる場合のみ
+// 一致とする（前方一致ではなく完全一致にすることで、他のプロフィールIDを誤って
+// 部分マッチさせない）。
+function keyMatchesProfile(rawKey, key, profileId) {
+  if (profileId === 'default') return key === rawKey;
+  return key === (rawKey + '__p_' + profileId) || key === (rawKey + '__' + profileId);
+}
+// matchKeysForSite()の結果（そのサイトの"全プロフィール分"のキー）から、指定した1つの
+// プロフィールIDのキーだけに絞り込む。namespaced:falseなサイトやprofileId==='all'
+// （絞り込み無し＝従来どおり）の場合は、matchKeysForSite()の結果をそのまま返す。
+function matchKeysForSiteProfile(site, keyPool, profileId) {
+  if (!site.namespaced || profileId === 'all') return matchKeysForSite(site, keyPool);
+  return keyPool.filter(k => site.keys.some(rawKey => keyMatchesProfile(rawKey, k, profileId)));
+}
+// 🆕 プロフィール単位の引き継ぎ絞り込み（サイトごとのプロフィール選択UI）用に、この端末に
+// 登録済みのプロフィール一覧（skyProfiles_v1。companion独自レコードも同じ登録先を共有する
+// ため、ここに含まれる＝選択肢に出せる）を安全に読み出す。
+function getLocalProfilesList() {
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(PROFILE_REGISTRY_KEYS[0])) || []; } catch (e) { list = []; }
+  if (!Array.isArray(list)) list = [];
+  return list.filter(p => p && typeof p.id === 'string');
 }
 
 // ✅ エクスポート／インポート、両方のサイト選択チェックリスト共通の「全選択／全解除」処理
@@ -1169,6 +1273,74 @@ function renderLastExportReminder() {
 }
 
 /* ================================================================
+   🕒 直近の書き出し/読込履歴ログ
+   上の「最終バックアップ」リマインダー（日時1件のみ）を土台に、直近5件分の
+   書き出し/読込イベントを、それぞれの対象サイト一覧つきで記録する。このツール
+   自身の内部管理用キー（SITE_SNAPSHOT_KEY・LAST_EXPORT_KEYと同じ理由で引き継ぎの
+   対象キーには含めない＝SITE_CATALOGのどのsite.keysにもマッチしない専用
+   プレフィックスを使う）。
+   ================================================================ */
+const TRANSFER_HISTORY_KEY = 'dataTransferHistory_v1'; // [{ type:'export'|'import', at:ISO日時, siteIds:[可視サイトid,...], hiddenCount:非公開サイト件数 }, ...] 新しい順
+const TRANSFER_HISTORY_MAX = 5;
+let transferHistoryOpen = false;
+
+function loadTransferHistory() {
+  try {
+    const v = JSON.parse(localStorage.getItem(TRANSFER_HISTORY_KEY));
+    return Array.isArray(v) ? v : [];
+  } catch (e) { return []; }
+}
+// siteIdsは可視サイト（SITE_CATALOGのhidden:trueでないもの）のみを渡す想定。非公開サイトは
+// 名前を記録に残さず、hiddenCountの件数としてのみ記録する（既存のoverwriteHiddenNote等と
+// 同じマスキング方針）。
+function recordTransferHistoryEntry(type, siteIds, hiddenCount) {
+  try {
+    const list = loadTransferHistory();
+    list.unshift({ type, at: new Date().toISOString(), siteIds: (siteIds || []).slice(), hiddenCount: hiddenCount || 0 });
+    localStorage.setItem(TRANSFER_HISTORY_KEY, JSON.stringify(list.slice(0, TRANSFER_HISTORY_MAX)));
+  } catch (e) { /* 保存領域上限等は無視して本来の書き出し/読込処理は継続する */ }
+}
+
+function toggleTransferHistory() {
+  transferHistoryOpen = !transferHistoryOpen;
+  renderTransferHistory();
+}
+
+function renderTransferHistory() {
+  const toggleBtn = document.getElementById('transferHistoryToggleBtn');
+  const areaEl = document.getElementById('transferHistoryArea');
+  if (!toggleBtn || !areaEl) return;
+  const history = loadTransferHistory();
+  // 履歴が1件も無い場合は、押しても何も出ないトグルボタン自体を表示しない
+  toggleBtn.style.display = history.length > 0 ? '' : 'none';
+  toggleBtn.textContent = transferHistoryOpen ? t('dyn.hideHistoryBtn') : t('dyn.showHistoryBtn');
+  if (!transferHistoryOpen || history.length === 0) { areaEl.innerHTML = ''; return; }
+
+  areaEl.innerHTML = '<div class="transfer-history-list">' + history.map(entry => {
+    const icon = entry.type === 'export' ? '📤' : '📥';
+    const dateLabel = siteUpdatedAtLabel(entry.at);
+    const siteNames = (entry.siteIds || []).map(id => {
+      const site = SITE_CATALOG.find(s => s.id === id);
+      return site ? siteLabel(site) : id;
+    });
+    const joiner = LANG === 'en' ? ', ' : '、';
+    let sitesText = siteNames.join(joiner);
+    if (entry.hiddenCount > 0) {
+      const hiddenNote = t('dyn.historyHiddenNote', { n: entry.hiddenCount });
+      sitesText = sitesText ? sitesText + joiner + hiddenNote : hiddenNote;
+    }
+    if (!sitesText) sitesText = t('dyn.historyNoSites');
+    const rowLabelKey = entry.type === 'export' ? 'dyn.historyExportRowLabel' : 'dyn.historyImportRowLabel';
+    const ariaLabel = t(rowLabelKey, { date: dateLabel, sites: sitesText });
+    return `<div class="transfer-history-row" aria-label="${escapeHtml(ariaLabel)}">
+      <span class="transfer-history-icon" aria-hidden="true">${icon}</span>
+      <span class="transfer-history-date">${escapeHtml(dateLabel)}</span>
+      <span class="transfer-history-sites">${escapeHtml(sitesText)}</span>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+/* ================================================================
    コードの圧縮/展開 + Base64（UTF-8セーフ）
    「コードが長すぎる」というフィードバックを受けて、JSON文字列をgzip圧縮
    （CompressionStream、外部ライブラリ不要）してからBase64化し、コードの
@@ -1234,27 +1406,68 @@ function escapeHtml(str) {
 /* ================================================================
    📤 エクスポート（サイト選択 → コード作成）
    ================================================================ */
+// 🆕 サイト単位ではなくプロフィール単位での引き継ぎ絞り込み：サイトごとに選択中のプロフィール
+// フィルタ（'all'＝従来どおり全プロフィール分／特定のプロフィールIDならそのプロフィールの
+// データのみ）。renderExportSiteList()の再描画（言語切替時など）をまたいで選択を保持するため
+// モジュールスコープに置く（再描画のたびに初期値'all'へ戻ることを避ける）。
+let exportProfileFilters = {};
+
 function renderExportSiteList() {
   const allKeys = getAllLocalStorageKeys();
+  const profiles = getLocalProfilesList();
   const el = document.getElementById('exportSiteList');
   el.innerHTML = SITE_CATALOG.filter(site => !site.hidden).map(site => {
     const matched = matchKeysForSite(site, allKeys);
     const hasData = matched.length > 0;
-    return `
-      <label class="site-opt ${hasData ? '' : 'no-data'}">
+    // 🆕 同じ端末に複数のプロフィールが登録されている場合のみ、サイトごとの
+    // プロフィール絞り込みセレクターを表示する（1件のみ／未登録の場合は従来どおり）。
+    const showProfileFilter = site.namespaced && profiles.length > 1;
+    const filterVal = showProfileFilter ? (exportProfileFilters[site.id] || 'all') : 'all';
+    const filteredMatched = filterVal === 'all' ? matched : matchKeysForSiteProfile(site, allKeys, filterVal);
+    const rowHtml = `
+      <label class="site-opt ${hasData ? '' : 'no-data'} ${showProfileFilter ? 'has-profile-filter' : ''}" data-site="${site.id}">
         <input type="checkbox" class="site-checkbox" data-site="${site.id}" ${hasData ? 'checked' : ''}>
         <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
-        <span class="site-opt-count">${t('dyn.keysCount', { n: matched.length })}</span>
+        <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}</span>
       </label>`;
+    const profileRowHtml = showProfileFilter ? `
+      <div class="site-opt-profile-row">
+        <span aria-hidden="true">👤</span>
+        <select class="site-profile-filter" data-site="${site.id}"
+          onchange="onExportProfileFilterChange('${site.id}', this.value)"
+          aria-label="${escapeHtml(t('page.profileFilterAriaLabel', { site: siteLabel(site) }))}">
+          <option value="all" ${filterVal === 'all' ? 'selected' : ''}>${escapeHtml(t('page.allProfilesOption'))} (${t('dyn.keysCount', { n: matched.length })})</option>
+          ${profiles.map(p => {
+            const cnt = matchKeysForSiteProfile(site, allKeys, p.id).length;
+            return `<option value="${escapeHtml(p.id)}" ${filterVal === p.id ? 'selected' : ''}>${escapeHtml(profileDisplayName(p))} (${t('dyn.keysCount', { n: cnt })})</option>`;
+          }).join('')}
+        </select>
+      </div>` : '';
+    return rowHtml + profileRowHtml;
   }).join('');
+}
+
+// 🆕 サイトごとのプロフィール絞り込みセレクターの変更ハンドラ。チェックボックスの選択状態
+// （他サイトも含む）を保ったまま、変更されたサイトの件数表示だけをピンポイントで更新する
+// （renderExportSiteList()を丸ごと再実行すると、他サイトのチェック状態まで初期値に
+// 戻ってしまうため、意図的に全体再描画を避けている）。
+function onExportProfileFilterChange(siteId, value) {
+  exportProfileFilters[siteId] = value;
+  const site = SITE_CATALOG.find(s => s.id === siteId);
+  if (!site) return;
+  const allKeys = getAllLocalStorageKeys();
+  const filtered = matchKeysForSiteProfile(site, allKeys, value);
+  const countEl = document.querySelector(`#exportSiteList label.site-opt[data-site="${siteId}"] .site-opt-count`);
+  if (countEl) countEl.textContent = t('dyn.keysCount', { n: filtered.length });
 }
 
 let lastExportCode = null;
 let lastExportResult = null; // { selectedIds, keyCount, codeLength, compressRate }
 let exportTextareaOpen = false;
 let exportQrOpen = false;
+let exportLinkOpen = false;
 
-// 📤 エクスポート出力（ダウンロード/コピー/QR）の状態を破棄し、パネルを空にする。
+// 📤 エクスポート出力（ダウンロード/コピー/リンク/QR）の状態を破棄し、パネルを空にする。
 // 新しくコードを作成する直前と、インポートが完了した直後（インポートで書き込んだ
 // データが反映されていない古いコードを誤ってダウンロード/コピー/QR表示させない
 // ため）の両方から呼び出す。
@@ -1263,6 +1476,7 @@ function resetExportOutput() {
   lastExportResult = null;
   exportTextareaOpen = false;
   exportQrOpen = false;
+  exportLinkOpen = false;
   const outputEl = document.getElementById('exportOutputArea');
   if (outputEl) outputEl.innerHTML = '';
 }
@@ -1278,8 +1492,8 @@ async function generateExportCode() {
   // 🌳 hidden:true のサイトはチェックリストに出ないため選択のしようがないが、既存データを
   // 持っていれば下で選択の有無に関わらず常に含めるため、「選択0件」エラーの判定にも
   // それを反映する（confirmImport()側のhasHiddenDataと同じ扱い）。
-  const hasHiddenExportData = SITE_CATALOG.filter(s => s.hidden).some(site => matchKeysForSite(site, allKeys).length > 0);
-  if (selectedIds.length === 0 && !hasHiddenExportData) {
+  const hiddenExportSites = SITE_CATALOG.filter(s => s.hidden).filter(site => matchKeysForSite(site, allKeys).length > 0);
+  if (selectedIds.length === 0 && hiddenExportSites.length === 0) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = t('dyn.selectAtLeastOneSite');
     return;
@@ -1290,9 +1504,18 @@ async function generateExportCode() {
     const v = localStorage.getItem(k);
     if (v !== null) dump[k] = v;
   });
+  // 🆕 サイトごとにプロフィール絞り込み（exportProfileFilters）が指定されていれば、
+  // そのサイトについては該当プロフィール分のキーだけを含める。選択中の値が現在の
+  // プロフィール一覧に実在しない（他タブでのプロフィール削除等による古い選択値）
+  // 場合は、データを静かに0件にしてしまわないよう安全側の'all'（従来どおり全プロフィール分）
+  // にフォールバックする。
+  const profilesNow = getLocalProfilesList();
   selectedIds.forEach(id => {
     const site = SITE_CATALOG.find(s => s.id === id);
-    matchKeysForSite(site, allKeys).forEach(k => { dump[k] = localStorage.getItem(k); });
+    const requestedFilter = exportProfileFilters[id];
+    const validFilter = (requestedFilter && requestedFilter !== 'all' && profilesNow.some(p => p.id === requestedFilter))
+      ? requestedFilter : 'all';
+    matchKeysForSiteProfile(site, allKeys, validFilter).forEach(k => { dump[k] = localStorage.getItem(k); });
   });
   // 🌳 hidden:true のサイト（未公開ツール等）はチェックリストに出さないが、既存データを
   // 引き継ぎから静かに落とさないよう、選択の有無に関わらず常に一緒に含める
@@ -1336,6 +1559,10 @@ async function generateExportCode() {
   // そのものはここで完了している）。
   recordLastExportAt();
   renderLastExportReminder();
+  // 🕒 直近の書き出し/読込履歴ログにも同じタイミングで1件追加する（非公開サイトは
+  // 既存の.overwriteHiddenNote等と同じく、名前は出さず件数のみを記録する）。
+  recordTransferHistoryEntry('export', selectedIds, hiddenExportSites.length);
+  renderTransferHistory();
 
   renderExportOutput();
   statusEl.className = 'status-msg';
@@ -1379,12 +1606,15 @@ function renderExportOutput() {
     <button type="button" class="action-btn primary" onclick="downloadExportFile()">${t('dyn.downloadBtn')}</button>
     <button type="button" class="action-btn secondary" onclick="toggleExportTextarea()">${t('dyn.showCodeBtn')}</button>
     <div id="exportTextareaArea"></div>
+    <button type="button" class="action-btn secondary" onclick="toggleExportLink()">${t('dyn.showLinkBtn')}</button>
+    <div id="exportLinkArea"></div>
     ${qrFeasible
       ? `<button type="button" class="action-btn secondary" onclick="toggleExportQr()">${t('dyn.showQrBtn')}</button>`
       : `<div class="status-msg">${t('dyn.qrTooLong')}</div>`}
     <div id="exportQrArea"></div>
   `;
   renderExportTextareaArea();
+  renderExportLinkArea();
   renderExportQrArea();
 }
 
@@ -1434,6 +1664,87 @@ async function copyExportCode() {
   } catch (e) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = t('dyn.copyFailed');
+  }
+}
+
+/* ================================================================
+   🔗 URLフラグメント経由でのコード共有
+   引き継ぎコードを、サーバーに送信されないURLフラグメント（#以降）にのみ埋め込む
+   （クエリ文字列 ?... には絶対に入れない。フラグメントはブラウザ内で完結し、
+   ページ読み込み時のHTTPリクエストにも含まれない）。別の端末でこのリンクを開くと、
+   下のloadCodeFromUrlFragmentIfPresent()が読み込み時にコードを検出し、貼り付け欄へ
+   自動で読み込む。
+   ================================================================ */
+function buildTransferLink(code) {
+  return location.origin + location.pathname + '#code=' + encodeURIComponent(code);
+}
+
+function toggleExportLink() {
+  if (!lastExportCode) return;
+  exportLinkOpen = !exportLinkOpen;
+  renderExportLinkArea();
+}
+
+function renderExportLinkArea() {
+  const area = document.getElementById('exportLinkArea');
+  if (!area) return;
+  if (!exportLinkOpen || !lastExportCode) { area.innerHTML = ''; return; }
+  const link = buildTransferLink(lastExportCode);
+  // ⚠️ URL自体に技術的な上限は無いが、あまりに長いリンクは一部のチャット/SMSアプリで
+  // 正しく開けないことがあるため、QRコードの容量チェック（QR_MAX_BYTES）と同程度の
+  // 長さを超えた場合は注意書きを添える（機能自体は止めない。ハードブロックはしない）。
+  const longNote = link.length > QR_MAX_BYTES ? `<div class="status-msg">${t('dyn.linkTooLongNote')}</div>` : '';
+  area.innerHTML = `
+    <textarea id="linkOutput" class="code-textarea" readonly onclick="this.select()">${escapeHtml(link)}</textarea>
+    ${longNote}
+    <button type="button" class="action-btn secondary" onclick="copyExportLinkCode()">${t('dyn.copyLinkBtn')}</button>
+  `;
+}
+
+async function copyExportLinkCode() {
+  const ta = document.getElementById('linkOutput');
+  if (!ta) return;
+  ta.select();
+  const statusEl = document.getElementById('exportStatus');
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    statusEl.className = 'status-msg ok';
+    statusEl.textContent = t('dyn.copyLinkSuccess');
+  } catch (e) {
+    statusEl.className = 'status-msg err';
+    statusEl.textContent = t('dyn.copyLinkFailed');
+  }
+}
+
+// ページ読み込み時に #code=... 形式のURLフラグメントが付いていれば、貼り付け欄への
+// 手動コピー&ペーストを省略して自動でコードを読み込む（ファイルからの読み込みと同様、
+// 「ユーザーが明示的に用意した入力を検出して自動処理する」既存のhandleImportFile()と
+// 同じ扱い）。
+function extractCodeFromLocationHash() {
+  const h = location.hash || '';
+  if (!h.startsWith('#code=')) return null;
+  try {
+    const code = decodeURIComponent(h.slice('#code='.length));
+    return code || null;
+  } catch (e) { return null; }
+}
+async function loadCodeFromUrlFragmentIfPresent() {
+  const code = extractCodeFromLocationHash();
+  if (!code) return;
+  // 🔒 コードを読み取ったら、URLバー・ブラウザ履歴にコードが残り続けないよう、
+  // 同一ページ内でフラグメントだけを即座に取り除く（サーバーへの新規リクエストは
+  // 発生しない。history.replaceStateはページ遷移を伴わない）。
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* noop */ }
+  const input = document.getElementById('importCodeInput');
+  if (input) input.value = code;
+  scrollToId('importSection');
+  await processImportCode(code);
+  if (pendingImportData) {
+    const statusEl = document.getElementById('importStatus');
+    if (statusEl && !statusEl.textContent) {
+      statusEl.className = 'status-msg ok';
+      statusEl.textContent = t('dyn.linkAutoLoadedNotice');
+    }
   }
 }
 
@@ -1591,6 +1902,119 @@ async function processImportCode(code) {
   renderImportSiteArea();
 }
 
+/* ================================================================
+   📊 上書き警告の「内容差分」要約
+   既存の上書き警告（日付比較のみ）を拡張し、インポートされたJSONの中身を現在の
+   ローカル値と突き合わせて「実際に何が変わるか」をbest-effortで要約する。特定サイトの
+   具体的なデータ構造（例：item側のgameItems_<cat>が{itemOwned:{...},itemFav:{...}}と
+   いう形、称号記録が{earned:{<id>:ISO日時},hwm:{...}}という形）を前提にした専用ロジック
+   ではなく、JSONの形（配列／オブジェクト）そのものから汎用的に差分を集計する、完全な
+   汎用diffビューアではない一言サマリーである。
+   ================================================================ */
+function tryParseJson(raw) {
+  if (raw === null || raw === undefined) return { ok: false };
+  try { return { ok: true, value: JSON.parse(raw) }; } catch (e) { return { ok: false }; }
+}
+
+// オブジェクト/配列を再帰的に辿り、末端の値ごとに「追加(added)」「消失(removed)」
+// 「変化(changed)」を集計する。
+//  ・配列同士（プリミティブ／オブジェクトの配列）は「順序を問わない集合」とみなし、要素の
+//    値ベースで差分を取る（入手ログ等、レコードが積み上がっていく配列に対応するため）。
+//  ・オブジェクト同士はキー単位で比較し、片方にしか無い／真偽値的に「無い」状態から
+//    「在る」状態へ変わったキーをadded、その逆をremoved、両方に実在し値が異なるものを
+//    changedとする（真偽値マップ型の所持状況・存在マップ型の称号記録のどちらにも対応）。
+// depthは異常に深い構造に対する安全策（JSON.parseの出力に循環参照は起こり得ない）。
+function diffJsonLeaves(localVal, importedVal, out, depth) {
+  if (depth > 8) return;
+  const isArr = v => Array.isArray(v);
+  const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+  if (isArr(localVal) || isArr(importedVal)) {
+    const a = isArr(localVal) ? localVal : [];
+    const b = isArr(importedVal) ? importedVal : [];
+    const norm = x => (x !== null && typeof x === 'object') ? JSON.stringify(x) : x;
+    const aSet = new Set(a.map(norm));
+    const bSet = new Set(b.map(norm));
+    b.forEach(x => { if (!aSet.has(norm(x))) out.added++; });
+    a.forEach(x => { if (!bSet.has(norm(x))) out.removed++; });
+    return;
+  }
+  if (isObj(localVal) || isObj(importedVal)) {
+    const a = isObj(localVal) ? localVal : {};
+    const b = isObj(importedVal) ? importedVal : {};
+    const keys = new Set(Object.keys(a).concat(Object.keys(b)));
+    keys.forEach(k => {
+      const av = a[k], bv = b[k];
+      if (isObj(av) || isArr(av) || isObj(bv) || isArr(bv)) {
+        diffJsonLeaves(av, bv, out, depth + 1);
+        return;
+      }
+      const aHas = Object.prototype.hasOwnProperty.call(a, k) && !!av;
+      const bHas = Object.prototype.hasOwnProperty.call(b, k) && !!bv;
+      if (bHas && !aHas) out.added++;
+      else if (aHas && !bHas) out.removed++;
+      else if (aHas && bHas && av !== bv) out.changed++;
+    });
+  }
+}
+
+// 1つのlocalStorageキーについて、現在ローカルにある生の文字列値とインポートされた生の
+// 文字列値を比較する。両方ともJSON構造として解釈できる場合は上のdiffJsonLeavesで中身まで
+// 踏み込み、片方でも生の文字列/数値のような非構造データの場合は「値が変わったか」だけを
+// 1件として計上する（それ以上は中身を解釈できないため）。
+function diffKeyValues(localRaw, importedRaw) {
+  const out = { added: 0, removed: 0, changed: 0 };
+  if (localRaw === importedRaw) return out;
+  const lp = tryParseJson(localRaw);
+  const ip = tryParseJson(importedRaw);
+  const lVal = lp.ok ? lp.value : undefined;
+  const iVal = ip.ok ? ip.value : undefined;
+  const lIsStruct = lVal !== null && typeof lVal === 'object';
+  const iIsStruct = iVal !== null && typeof iVal === 'object';
+  if (lIsStruct || iIsStruct) {
+    diffJsonLeaves(lIsStruct ? lVal : {}, iIsStruct ? iVal : {}, out, 0);
+    return out;
+  }
+  if (localRaw === null || localRaw === undefined) out.added = 1;
+  else if (importedRaw === null || importedRaw === undefined) out.removed = 1;
+  else out.changed = 1;
+  return out;
+}
+
+// サイト単位で、インポートデータに含まれるキー（＝実際に上書きされ得るキー）だけを対象に
+// 差分を集計する。ローカルにしか存在しないキー（インポート側に無い）はconfirmImport()でも
+// 触れられず上書きされないため、対象外にする。キー名が"Titles_v1"で終わるもの（SITE_CATALOG
+// の各サイトに共通する、姉妹サイト横断の称号カタログ用キーの命名規則）は、通常の項目とは
+// 別枠で「称号」として集計する。
+function computeSiteContentDiff(site, importedData) {
+  const importedKeysForSite = matchKeysForSite(site, Object.keys(importedData));
+  const totals = { entriesAdded: 0, entriesRemoved: 0, entriesChanged: 0, titlesAdded: 0 };
+  importedKeysForSite.forEach(k => {
+    const d = diffKeyValues(localStorage.getItem(k), importedData[k]);
+    if (/Titles_v1$/i.test(k)) totals.titlesAdded += d.added;
+    else {
+      totals.entriesAdded += d.added;
+      totals.entriesRemoved += d.removed;
+      totals.entriesChanged += d.changed;
+    }
+  });
+  return totals;
+}
+
+// 集計結果を、上書き警告ボックスに添える一言サマリー文字列に組み立てる。何も検出
+// できなければ（＝実質的な内容差が無い、または差分を解釈できなかった）空文字を返し、
+// その場合は呼び出し側で何も表示しない。
+function formatSiteDiffSummary(diff) {
+  if (!diff) return '';
+  const parts = [];
+  if (diff.entriesAdded > 0) parts.push(t('dyn.diffEntriesAdded', { n: diff.entriesAdded }));
+  if (diff.titlesAdded > 0) parts.push(t('dyn.diffTitlesAdded', { n: diff.titlesAdded }));
+  if (diff.entriesChanged > 0) parts.push(t('dyn.diffEntriesChanged', { n: diff.entriesChanged }));
+  if (diff.entriesRemoved > 0) parts.push(t('dyn.diffEntriesRemoved', { n: diff.entriesRemoved }));
+  if (parts.length === 0) return '';
+  return t('dyn.diffSummaryPrefix') + parts.join(LANG === 'en' ? ', ' : '、');
+}
+
 // ⚠️ このインポートで「新しく追加される」のか「既にこの端末にデータがあり上書きされる」
 // のかを、サイト単位で判定する（bug #8: 上書き前の警告表示・feature #7: 最終更新の
 // 突き合わせで共用）。コード側埋め込みの最終更新（pendingImportSiteUpdatedAt）と、この
@@ -1603,7 +2027,10 @@ function computeImportOverwriteInfo() {
     const hasLocalData = matchKeysForSite(site, currentLocalKeys).length > 0;
     const localUpdatedAt = (hasLocalData && localSnapshots[site.id]) ? localSnapshots[site.id].updatedAt : null;
     const importUpdatedAt = (pendingImportSiteUpdatedAt && pendingImportSiteUpdatedAt[site.id]) || null;
-    return { site, hasLocalData, localUpdatedAt, importUpdatedAt };
+    // 📊 上書きが起きるサイトについてのみ、内容差分を計算する（新規追加のみのサイトには
+    // 「上書きで何が変わるか」という問い自体が発生しないため）。
+    const contentDiff = hasLocalData ? computeSiteContentDiff(site, pendingImportData || {}) : null;
+    return { site, hasLocalData, localUpdatedAt, importUpdatedAt, contentDiff };
   });
   const hiddenOverwriteCount = SITE_CATALOG
     .filter(s => s.hidden && matchKeysForSite(s, lastImportDataKeys || []).length > 0)
@@ -1621,7 +2048,7 @@ function computeImportOverwriteInfo() {
 // ⚠️ 上書き・新規プロフィール追加の内訳ボックス。警告すべき内容が無ければ空文字を返す。
 function renderImportWarningBoxHtml(info) {
   if (!info) return '';
-  const overwriteRows = info.visible.filter(v => v.hasLocalData).map(({ site, localUpdatedAt, importUpdatedAt }) => {
+  const overwriteRows = info.visible.filter(v => v.hasLocalData).map(({ site, localUpdatedAt, importUpdatedAt, contentDiff }) => {
     let text = escapeHtml(siteLabel(site));
     if (importUpdatedAt) {
       const openParen = LANG === 'en' ? ' (' : '（';
@@ -1633,7 +2060,10 @@ function renderImportWarningBoxHtml(info) {
       }
       text += closeParen;
     }
-    return `<div class="site-updated-row overwrite"><span class="site-updated-name">${text}</span></div>`;
+    // 📊 「何が変わるか」の内容差分（best-effort。検出できるものが無ければ何も足さない）
+    const diffText = formatSiteDiffSummary(contentDiff);
+    const diffHtml = diffText ? `<div class="site-diff-note">${escapeHtml(diffText)}</div>` : '';
+    return `<div class="site-updated-row overwrite"><span class="site-updated-name">${text}</span></div>${diffHtml}`;
   }).join('');
 
   const parts = [];
@@ -1753,6 +2183,9 @@ function confirmImport() {
   hiddenSites.forEach(site => {
     matchKeysForSite(site, dataKeys).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
   });
+  // 🕒 直近の書き出し/読込履歴ログにも1件追加する（非公開サイトは名前を出さず件数のみ記録）。
+  const hiddenImportSiteCount = hiddenSites.filter(site => matchKeysForSite(site, dataKeys).length > 0).length;
+  recordTransferHistoryEntry('import', selectedIds, hiddenImportSiteCount);
 
   statusEl.className = 'status-msg ok';
   statusEl.textContent = t('dyn.restoreSuccess', { n: count }) + (newProfiles.length > 0
@@ -1769,6 +2202,7 @@ function confirmImport() {
   document.getElementById('importCodeInput').value = '';
   refreshSiteSnapshots(); // 🕒 インポートで書き込んだ内容を、このツールの「最終更新」把握にも反映する
   renderExportSiteList(); // インポートで書き込んだデータを、エクスポート側のチェックリスト/件数へ即反映する
+  renderTransferHistory(); // 🕒 今回の読込を履歴ログに即反映する
   resetExportOutput(); // インポート前に作成済みだったエクスポートコードは新データを含まず古くなるため破棄する
 }
 
@@ -1780,6 +2214,8 @@ applyThemeToDOM();
 refreshSiteSnapshots(); // 🕒 このツールの「最終更新」把握を、今この端末にある最新の中身に合わせて更新する
 renderExportSiteList();
 renderLastExportReminder(); // 🕒 「最終バックアップ」リマインダーを初期表示する
+renderTransferHistory(); // 🕒 書き出し/読込履歴ログを初期表示する
+loadCodeFromUrlFragmentIfPresent(); // 🔗 #code=... 付きのリンクで開かれた場合、コードを自動で読み込む
 </script>
 </body>
 </html>
