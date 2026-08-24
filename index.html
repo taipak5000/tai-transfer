@@ -880,11 +880,16 @@ const SITE_CATALOG = [
     // 🔔 ダッシュボードのカウントダウン通知リマインダー（オン/オフ・通知間隔・通知済み
     // 記録）。profiles.js参照。nsKey()を経由しないグローバルキーだが、上のgameItems_viewMode/
     // gridColsと同じ理由でこの並びにそのまま含める。
-    'sky_dash_reminder_enabled', 'sky_dash_reminder_minutes', 'sky_dash_reminder_notified_v1'
+    'sky_dash_reminder_enabled', 'sky_dash_reminder_minutes', 'sky_dash_reminder_notified_v1',
+    // 🏆 姉妹サイト横断の称号カタログ（CROSS_TOOL_TITLE_CATALOG）用、item自身の獲得称号・
+    // 課金合計額のハイウォーターマーク（profiles.js のTITLES_KEY/MONEY_SPENT_KEYと同じ。
+    // 他サイトの各*Titles_v1と同様、nsKey()経由でプロフィール別）
+    'itemTitles_v1', 'itemCostMoneySum_v1'
   ]},
   { id: 'wings', label: '🪽 羽トラッカー', labelEn: '🪽 Wing Tracker', namespaced: true, keys: [
     'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1',
-    'wingsShareCustomize_v1' // 🎨 共有画像のテーマカスタマイズ（index.html参照）
+    'wingsShareCustomize_v1', // 🎨 共有画像のテーマカスタマイズ（index.html参照）
+    'wingsTitles_v1' // 🏆 姉妹サイト横断の称号カタログ用、wings自身の獲得称号（titlesKey()参照）
   ]},
   { id: 'companion', label: '✨ 精霊同行ツール', labelEn: '✨ Spirit Companion Tool', namespaced: true, keys: [
     'sky_companion_v4_data', 'sky_companion_records_meta_v1'
@@ -894,16 +899,26 @@ const SITE_CATALOG = [
     // 🔭 予報の高確度のみ表示フィルタ／🔔 赤闇シャード・達成予定日の通知オン・オフと
     // 直近通知済みの記録（index.html参照。いずれもnsKey()経由でプロフィール別）
     'skyStarCandleForecastFilterHigh_v1', 'skyStarCandleNotifyShardOn_v1', 'skyStarCandleNotifyGoalOn_v1',
-    'skyStarCandleNotifyShardLast_v1', 'skyStarCandleNotifyGoalLast_v1'
+    'skyStarCandleNotifyShardLast_v1', 'skyStarCandleNotifyGoalLast_v1',
+    // 🏆 称号カタログ用のハイウォーターマーク（所持本数最高値・連続回収日数最高記録・
+    // 恒久チェックイン履歴）と獲得称号本体（TITLE_MAX_CANDLE_KEY等参照）
+    'skyStarCandleCalc_maxCandle_v1', 'skyStarCandleCalc_checkinLog_v1',
+    'skyStarCandleCalc_streakBest_v1', 'skyStarCandleCalc_titles_v1'
   ]},
   { id: 'nomacan', label: '🕯️ ノマキャン計算機', labelEn: '🕯️ Nomacan Calculator', namespaced: true, keys: [
-    'skyNomacanCalc_v1', 'skyNomacanCalc_history_v1', 'skyNomacanGoals_v1'
+    'skyNomacanCalc_v1', 'skyNomacanCalc_history_v1', 'skyNomacanGoals_v1',
+    // 🏆 連続回収日数の記録（streakKey）と獲得称号（titlesKey）
+    'skyNomacanStreak_v1', 'skyNomacanTitles_v1'
   ]},
   { id: 'share', label: '📍 創作物管理ツール', labelEn: '📍 Creation Manager', namespaced: true, keys: [
-    'sky_tracker_storage'
+    'sky_tracker_storage',
+    'shareTitles_v1' // 🏆 姉妹サイト横断の称号カタログ用、share自身の獲得称号（TITLES_KEY参照）
   ]},
   { id: 'emote', label: '🎭 エモート所持率管理', labelEn: '🎭 Emote Collection', namespaced: true, keys: [
-    'emoteOwned_v1', 'emoteShareCustomize_v1', 'emoteViewMode_v1'
+    'emoteOwned_v1', 'emoteShareCustomize_v1', 'emoteViewMode_v1',
+    // 📝 エモートごとの入手日時ログ（複合キー"<emoteId>::<level>"、ACQUIRE_LOG_KEY参照）
+    // ／🏆 獲得称号（TITLES_KEY参照）
+    'emoteAcquireLog_v1', 'emoteTitles_v1'
   ]},
   // 🌳 精霊ツリー管理はまだ一般公開していないため、チェックリストには表示しない
   // （hidden:true）。ただし既存ユーザーのデータを引き継ぎから静かに消さないよう、
@@ -911,14 +926,24 @@ const SITE_CATALOG = [
   // 同様、選択UIを介さず常に一緒に処理する）。
   { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', labelEn: '🌳 Spirit Tree Manager', namespaced: true, hidden: true, keys: [
     'spiritCatalogUnlocked_v1',
-    'catalogShareCustomize_v1' // 🎨 共有画像のテーマカスタマイズ（index.html参照）
+    'catalogShareCustomize_v1', // 🎨 共有画像のテーマカスタマイズ（index.html参照）
+    'spiritCatalogTitles_v1' // 🏆 姉妹サイト横断の称号カタログ用、獲得称号（TITLES_KEY_RAW参照）
   ]},
   // 🎵 楽譜づくり（tai-score）も精霊ツリー管理と同様、まだ一般公開しておらず
   // 他サイトのサイドバーからもリンクを外している（未完成のため）ので hidden:true
   // として扱う。プロフィール機構は使っておらずキーはグローバル（namespaced:false）。
   // 作成した楽譜データを引き継ぎから静かに消さないよう、対象キーとしては常に含める。
   { id: 'score', label: '🎵 楽譜づくり', labelEn: '🎵 Sheet Music Maker', namespaced: false, hidden: true, keys: [
-    'taiScoreSongs_v1', 'taiScoreKeyBindings_v1', 'taiScoreInputMode_v1', 'taiScoreFreePlayInstrument_v1'
+    'taiScoreSongs_v1', 'taiScoreKeyBindings_v1', 'taiScoreInputMode_v1', 'taiScoreFreePlayInstrument_v1',
+    // 🏆 獲得称号（TITLES_KEY参照）／📚 曲一覧の並び替え順・🎹 メトロノームON/OFF
+    // （いずれもnsKey()を経由しないグローバルキー、上の設定系キーと同じ理由でここに含める）
+    'taiScoreTitles_v1', 'taiScoreLibrarySort_v1', 'taiScoreMetronomeEnabled_v1'
+  ]},
+  // 🎴 星紡ぎカード（tai-card）もまだ一般公開しておらず、他サイトのサイドバーからも
+  // リンクを外している（未告知のため）ので hidden:true として扱う。プロフィールごとに
+  // nsKey()で分離される保存状態を持つため namespaced:true（tai-card/index.htmlのSTATE_KEY参照）。
+  { id: 'tai-card', label: '🎴 星紡ぎカード', labelEn: '🎴 Star-Spinning Cards', namespaced: true, hidden: true, keys: [
+    'taiCardState_v1'
   ]},
   { id: 'currency', label: '💰 所持通貨（共通）', labelEn: '💰 Owned Currency (Shared)', namespaced: true, keys: [
     'wishOwnCurrency', 'skyCurrencyExtra_v1'
@@ -1172,8 +1197,12 @@ async function encodeTransferCode(str) {
   }
   const cs = new CompressionStream('gzip');
   const writer = cs.writable.getWriter();
-  writer.write(bytes);
-  writer.close();
+  // ⚠️ write()/close()の返り値はここでは待たず、後続のarrayBuffer()側の失敗として
+  // まとめて拾う設計だが、それでもこの2つのPromiseが拒否されると「拾われなかった
+  // Promise」として不要なコンソールエラーになるため、無害な.catch()で握りつぶす
+  // （実際のエラー内容はarrayBuffer()側の拒否から取得できるため、ここでは不要）。
+  writer.write(bytes).catch(() => {});
+  writer.close().catch(() => {});
   const compressed = new Uint8Array(await new Response(cs.readable).arrayBuffer());
   return 'G1:' + bytesToBase64(compressed);
 }
@@ -1183,8 +1212,12 @@ async function decodeTransferCode(code) {
   if (marker === 'G1:') {
     const ds = new DecompressionStream('gzip');
     const writer = ds.writable.getWriter();
-    writer.write(base64ToBytes(body));
-    writer.close();
+    // ⚠️ 壊れた/正しくないコードを読み込んだ場合、write()/close()もarrayBuffer()と
+    // 同じ理由で拒否されるが、ここでは待たずに無害な.catch()で握りつぶす（拾われな
+    // かったPromiseの拒否として不要なコンソールエラーになるのを防ぐため。ユーザーへの
+    // エラー表示は、下のawait arrayBuffer()の拒否を呼び出し元がcatchして行う）。
+    writer.write(base64ToBytes(body)).catch(() => {});
+    writer.close().catch(() => {});
     const bytes = new Uint8Array(await new Response(ds.readable).arrayBuffer());
     return new TextDecoder().decode(bytes);
   }
