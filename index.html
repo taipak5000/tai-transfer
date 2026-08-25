@@ -95,6 +95,8 @@
     .sidebar-overlay.show { display: block; }
 
     .app-layout { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+    /* 🖥️ 共有デスクトップ標準：850px以上は960pxまで拡張（1カラムのまま、サイドバーは無し） */
+    @media (min-width: 850px) { .app-layout { max-width: 960px; } }
 
     .sidebar {
       background: var(--card); border-radius: var(--r); padding: 16px;
@@ -258,7 +260,7 @@
 
     /* ⚙️ 表示設定モーダル（ダークモード切替・キーボードショートカット設定） */
     .modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 600;
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000;
       align-items: center; justify-content: center; padding: 20px;
     }
     .modal-overlay.show { display: flex; }
@@ -362,6 +364,7 @@
     <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link" data-i18n="tools.companion"></a>
     <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link" data-i18n="tools.wings"></a>
     <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool" data-i18n="tools.dataTransfer"></a>
+    <a href="https://taipak5000.github.io/tai-info/" class="sidebar-nav-link" data-i18n="tools.taiInfo"></a>
   </aside>
 
   <div class="wrap">
@@ -491,6 +494,7 @@ const I18N = {
     'tools.companion': '✨ 精霊同行ツール',
     'tools.wings': '🪽 羽トラッカー',
     'tools.dataTransfer': '🔄 データ引継ぎ',
+    'tools.taiInfo': '⚙️ 設定・更新情報',
     'sidebar.hamburgerToggle': '☰ ツール',
     'sidebar.relatedToolsLabel': '🔗 関連ツール',
     'dock.ariaLabel': 'クイックメニュー',
@@ -600,6 +604,7 @@ const I18N = {
     'tools.companion': '✨ Spirit Companion Tool',
     'tools.wings': '🪽 Wing Tracker',
     'tools.dataTransfer': '🔄 Data Transfer',
+    'tools.taiInfo': '⚙️ Settings & Updates',
     'sidebar.hamburgerToggle': '☰ Tools',
     'sidebar.relatedToolsLabel': '🔗 Related Tools',
     'dock.ariaLabel': 'Quick Menu',
