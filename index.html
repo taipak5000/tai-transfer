@@ -1022,7 +1022,14 @@ const SITE_CATALOG = [
   { id: 'currency', label: '💰 所持通貨（共通）', labelEn: '💰 Owned Currency (Shared)', namespaced: true, keys: [
     'wishOwnCurrency', 'skyCurrencyExtra_v1'
   ]},
-  { id: 'skyzztai', label: '🕯️ ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', labelEn: '🕯️ Normal Candle Calculator (Legacy · Realm/Area Info)', namespaced: false, keys: [
+  // 🔒 このsky_tracker_storage_v3等のキー一式は、star-candle登場前の旧ノーマルキャンドル
+  // 計算機（現skyzztai.management.tool／tai-nomacan-pro）が今も実際に使っている現行データ
+  // であり、"旧版"はstar-candleとの新旧関係を指すだけで、このツール自体が退役済みという
+  // 意味ではない。skyzztai.management.tool はまだ一般公開していないサイトのため、
+  // spirit-catalog/score/tai-cardと同様 hidden:true とし、ラベル（"リアルム/エリア情報"
+  // という当該サイト固有の特徴的な機能名を含む）をチェックリストに出さない。既存データを
+  // 引き継ぎから静かに消さないよう、対象キーとしては変わらず常に含める。
+  { id: 'skyzztai', label: '🕯️ ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', labelEn: '🕯️ Normal Candle Calculator (Legacy · Realm/Area Info)', namespaced: false, hidden: true, keys: [
     'sky_tracker_storage_v3', 'sky_shard_sync_date', 'sky_skill_answered', 'sky_skill_level_key',
     'sky_current_time_mult', 'sky_area_view_mode', 'sky_atlas_bg_opacity'
   ]},
