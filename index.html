@@ -142,11 +142,11 @@
        「データ無し」を伝える。 */
     .site-opt.no-data .site-opt-label { color: var(--text-2); }
 
-    /* 🆕 サイト単位ではなくプロフィール単位で引き継ぎを絞り込むための、エクスポート
-       サイト一覧の各行に紐づく任意のプロフィール選択行（同じ端末に複数のプロフィール
-       （保存枠）が登録されている場合のみ表示。1件のみ／未登録の場合は表示自体を省略する）。
-       この行が付く.site-optは下線をこちらに付け替える（連続する2行をまとめて1つの
-       「サイト」として区切るため）。 */
+    /* 🆕 サイト単位ではなくプロフィール単位で引き継ぎを絞り込むための、サイト一覧
+       （エクスポート・インポート両方）の各行に紐づく任意のプロフィール選択行（複数の
+       プロフィール（保存枠）が対象に存在する場合のみ表示。1件のみ／未登録の場合は
+       表示自体を省略する）。この行が付く.site-optは下線をこちらに付け替える
+       （連続する2行をまとめて1つの「サイト」として区切るため）。 */
     .site-opt.has-profile-filter { border-bottom: none; padding-bottom: 4px; }
     .site-opt-profile-row {
       display: flex; align-items: center; gap: 8px;
@@ -157,6 +157,15 @@
       flex: 1; min-width: 0; font-size: 12.5px; color: var(--text); background: var(--bg);
       border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px;
     }
+
+    /* 🆕 エクスポートのチェックリストで、前回バックアップ（最終エクスポート成功時点）
+       以降にそのサイトのデータが変化したことを示す目印。常にDOM上には置いておき
+       (.show の有無だけを切り替える) ことで、コード作成直後にチェックボックスの選択
+       状態を巻き戻さずこの目印だけを更新できるようにする（updateExportChangedBadges()
+       参照）。一度もバックアップしていない場合は.last-export-reminder.never側で
+       案内済みのため、この目印自体を出さない（renderExportSiteList()側の条件）。 */
+    .site-opt-changed-badge { display: none; flex-shrink: 0; font-size: 13px; line-height: 1; }
+    .site-opt-changed-badge.show { display: inline; }
 
     /* ✅ 各サイト選択リスト共通の「全選択／全解除」行（wingsの.area-btnに倣った
        ピル型の小さいテキストボタン）。エクスポート側は静的HTML、インポート側は
@@ -192,13 +201,17 @@
        実行しなくても常時見える、持続的なステータス行（.hintの直後・操作ボタンより
        前に置き、バックアップ状況を選択リストより先に目に入るようにする）。
        一度もバックアップが無い場合(.never)は警告色ではなく--purpleで「まだ危険」
-       ではなく「やってみよう」という前向きなトーンにする。 */
+       ではなく「やってみよう」という前向きなトーンにする。
+       🆕 経過日数に応じて警告を段階的に強化する3段階目盛り：
+       ok(既定・~6日)は上のトーンのまま／.stale(7〜29日)は.neverと同じ前向きな
+       --purpleトーンで「そろそろ」を促す／.overdue(30日〜)のみ--redの警告色にする。 */
     .last-export-reminder {
       display: flex; align-items: center; gap: 7px;
       background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm);
       padding: 8px 12px; margin-bottom: 14px; font-size: 12.5px; color: var(--text-2); line-height: 1.6;
     }
-    .last-export-reminder.never { border-color: var(--purple); color: var(--purple-d); }
+    .last-export-reminder.never, .last-export-reminder.stale { border-color: var(--purple); color: var(--purple-d); }
+    .last-export-reminder.overdue { border-color: var(--red); color: var(--red); }
 
     /* 🕒 直近の書き出し/読込履歴ログ（last-export-reminderの下に配置。既定は折りたたみで、
        トグルボタンは既存の.list-select-btn（ピル型の小さいテキストボタン）をそのまま流用する） */
@@ -574,6 +587,9 @@ const I18N = {
     'dyn.lastExportToday': '🕒 最終バックアップ：今日',
     'dyn.lastExportYesterday': '🕒 最終バックアップ：1日前',
     'dyn.lastExportDaysAgo': '🕒 最終バックアップ：{n}日前',
+    'dyn.lastExportStale': '⚠️ 最終バックアップ：{n}日前。そろそろ新しいバックアップを作っておきましょう。',
+    'dyn.lastExportOverdue': '🚨 最終バックアップ：{n}日前。かなり日数が経っています。バックアップをおすすめします。',
+    'dyn.changedSinceBackupTitle': '前回のバックアップから内容が変わっています',
     'page.allProfilesOption': 'すべてのプロフィール',
     'page.profileFilterAriaLabel': '{site}の引き継ぎプロフィールを絞り込む',
     'dyn.diffSummaryPrefix': '📊 内容差分：',
@@ -684,6 +700,9 @@ const I18N = {
     'dyn.lastExportToday': '🕒 Last backup: today',
     'dyn.lastExportYesterday': '🕒 Last backup: 1 day ago',
     'dyn.lastExportDaysAgo': vars => `🕒 Last backup: ${vars.n} days ago`,
+    'dyn.lastExportStale': vars => `⚠️ Last backup: ${vars.n} days ago. Consider creating a new backup soon.`,
+    'dyn.lastExportOverdue': vars => `🚨 Last backup: ${vars.n} days ago. That's quite a while — a backup is recommended.`,
+    'dyn.changedSinceBackupTitle': 'Changed since your last backup',
     'page.allProfilesOption': 'All profiles',
     'page.profileFilterAriaLabel': 'Filter transferred profile for {site}',
     'dyn.diffSummaryPrefix': '📊 Content diff: ',
@@ -1157,6 +1176,17 @@ function getLocalProfilesList() {
   if (!Array.isArray(list)) list = [];
   return list.filter(p => p && typeof p.id === 'string');
 }
+// 🆕 上のgetLocalProfilesList()のインポート側版：この端末のlocalStorageではなく、読み込み中の
+// 引き継ぎコード（pendingImportData）に含まれるプロフィール一覧（skyProfiles_v1）を読み出す
+// （インポート側のプロフィール単位絞り込みで、選択肢として出すプロフィールは「送り出し側の
+// 端末に登録されていたプロフィール」であって、この端末の一覧ではないため）。
+function getImportedProfilesList() {
+  if (!pendingImportData) return [];
+  let list = [];
+  try { list = JSON.parse(pendingImportData[PROFILE_REGISTRY_KEYS[0]]) || []; } catch (e) { list = []; }
+  if (!Array.isArray(list)) list = [];
+  return list.filter(p => p && typeof p.id === 'string');
+}
 
 // ✅ エクスポート／インポート、両方のサイト選択チェックリスト共通の「全選択／全解除」処理
 function setAllSiteCheckboxes(selector, checked) {
@@ -1253,31 +1283,52 @@ function recordLastExportAt() {
   try { localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString()); } catch (e) { /* 保存領域上限等は無視してエクスポート自体は継続する */ }
 }
 
+// 🆕 前回のサイト選択を記憶：コード作成に成功するたびに、その時点でチェックが
+// 入っていたサイトidの一覧を保存する。次回renderExportSiteList()を描画する際、
+// この一覧を「データがあるサイトを既定でチェック」という従来のデフォルトより
+// 優先して使うことで、毎回同じサイトを選び直す手間を省く。LAST_EXPORT_KEY等と
+// 同じ理由で引き継ぎの対象キーには含めない専用プレフィックスを使う。
+const LAST_EXPORT_SELECTION_KEY = 'dataTransferLastExportSelection_v1';
+function getLastExportSelection() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LAST_EXPORT_SELECTION_KEY));
+    return Array.isArray(v) ? v : null;
+  } catch (e) { return null; }
+}
+function saveLastExportSelection(selectedIds) {
+  try { localStorage.setItem(LAST_EXPORT_SELECTION_KEY, JSON.stringify(selectedIds)); } catch (e) { /* 保存領域上限等は無視してエクスポート自体は継続する */ }
+}
+
 // 「今日」「1日前」「N日前」の判定は、経過ミリ秒ではなくローカルの暦日の差分で行う
 // （例：昨日23:58にバックアップし今日0:02に開いた場合、経過時間は4分でも「1日前」と
 // 表示する方が直感に合うため）。
-function lastExportDaysAgoLabel(iso) {
+// 🆕 バックアップ未実施の警告を段階的に強化：経過日数が伸びるほど、文言・トーンの
+// 両方を3段階（ok→stale→overdue）で強めていく。しきい値は他ツールの通知間隔等を
+// 踏まえたおおよその目安（7日＝約1週間放置／30日＝約1ヶ月放置）。
+function lastExportReminderState(iso) {
   const then = new Date(iso);
   if (isNaN(then.getTime())) return null;
   const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diffDays = Math.round((startOfDay(new Date()) - startOfDay(then)) / 86400000);
-  if (diffDays <= 0) return t('dyn.lastExportToday');
-  if (diffDays === 1) return t('dyn.lastExportYesterday');
-  return t('dyn.lastExportDaysAgo', { n: diffDays });
+  if (diffDays <= 0) return { tier: 'ok', label: t('dyn.lastExportToday') };
+  if (diffDays === 1) return { tier: 'ok', label: t('dyn.lastExportYesterday') };
+  if (diffDays >= 30) return { tier: 'overdue', label: t('dyn.lastExportOverdue', { n: diffDays }) };
+  if (diffDays >= 7) return { tier: 'stale', label: t('dyn.lastExportStale', { n: diffDays }) };
+  return { tier: 'ok', label: t('dyn.lastExportDaysAgo', { n: diffDays }) };
 }
 
 function renderLastExportReminder() {
   const el = document.getElementById('lastExportReminder');
   if (!el) return;
   const iso = getLastExportAt();
-  const label = iso ? lastExportDaysAgoLabel(iso) : null;
-  if (!label) {
+  const state = iso ? lastExportReminderState(iso) : null;
+  if (!state) {
     el.className = 'last-export-reminder never';
     el.textContent = t('dyn.lastExportNever');
     return;
   }
-  el.className = 'last-export-reminder';
-  el.textContent = label;
+  el.className = 'last-export-reminder' + (state.tier === 'ok' ? '' : ' ' + state.tier);
+  el.textContent = state.label;
 }
 
 /* ================================================================
@@ -1423,10 +1474,20 @@ let exportProfileFilters = {};
 function renderExportSiteList() {
   const allKeys = getAllLocalStorageKeys();
   const profiles = getLocalProfilesList();
+  // 🆕 前回のサイト選択を記憶：直近で実際にコードを作成した際のチェック状態を読み出す。
+  // 記録が無い（初回・localStorage不可時）場合は、従来どおり「データがあるサイトを
+  // 既定でチェック」にフォールバックする。
+  const savedSelection = getLastExportSelection();
+  // 🆕 前回バックアップからの変更目印：バックアップが一度もない場合は最上部の
+  // .last-export-reminder.neverで既に案内済みのため、ここでは出さない。
+  const lastExportAt = getLastExportAt();
+  const snapshots = refreshSiteSnapshots();
   const el = document.getElementById('exportSiteList');
   el.innerHTML = SITE_CATALOG.filter(site => !site.hidden).map(site => {
     const matched = matchKeysForSite(site, allKeys);
     const hasData = matched.length > 0;
+    const defaultChecked = savedSelection ? savedSelection.includes(site.id) : hasData;
+    const changedSinceBackup = !!(hasData && lastExportAt && snapshots[site.id] && snapshots[site.id].updatedAt > lastExportAt);
     // 🆕 同じ端末に複数のプロフィールが登録されている場合のみ、サイトごとの
     // プロフィール絞り込みセレクターを表示する（1件のみ／未登録の場合は従来どおり）。
     const showProfileFilter = site.namespaced && profiles.length > 1;
@@ -1434,8 +1495,10 @@ function renderExportSiteList() {
     const filteredMatched = filterVal === 'all' ? matched : matchKeysForSiteProfile(site, allKeys, filterVal);
     const rowHtml = `
       <label class="site-opt ${hasData ? '' : 'no-data'} ${showProfileFilter ? 'has-profile-filter' : ''}" data-site="${site.id}">
-        <input type="checkbox" class="site-checkbox" data-site="${site.id}" ${hasData ? 'checked' : ''}>
+        <input type="checkbox" class="site-checkbox" data-site="${site.id}" ${defaultChecked ? 'checked' : ''}>
         <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
+        <span class="site-opt-changed-badge ${changedSinceBackup ? 'show' : ''}" role="img"
+          aria-label="${escapeHtml(t('dyn.changedSinceBackupTitle'))}" title="${escapeHtml(t('dyn.changedSinceBackupTitle'))}">🔄</span>
         <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}</span>
       </label>`;
     const profileRowHtml = showProfileFilter ? `
@@ -1467,6 +1530,22 @@ function onExportProfileFilterChange(siteId, value) {
   const filtered = matchKeysForSiteProfile(site, allKeys, value);
   const countEl = document.querySelector(`#exportSiteList label.site-opt[data-site="${siteId}"] .site-opt-count`);
   if (countEl) countEl.textContent = t('dyn.keysCount', { n: filtered.length });
+}
+
+// 🆕 前回バックアップからの変更目印を、チェックボックスの選択状態を保ったまま
+// 更新する（コード作成直後に呼ぶ。renderExportSiteList()の全体再描画だとチェック
+// 状態が既定値に巻き戻ってしまうため、.site-opt-changed-badgeの.showクラスだけを
+// 個別に付け替える。バッジ自体は常にDOM上に存在するため要素の作り直しは不要）。
+function updateExportChangedBadges() {
+  const allKeys = getAllLocalStorageKeys();
+  const lastExportAt = getLastExportAt();
+  const snapshots = refreshSiteSnapshots();
+  SITE_CATALOG.filter(site => !site.hidden).forEach(site => {
+    const hasData = matchKeysForSite(site, allKeys).length > 0;
+    const changedSinceBackup = !!(hasData && lastExportAt && snapshots[site.id] && snapshots[site.id].updatedAt > lastExportAt);
+    const badgeEl = document.querySelector(`#exportSiteList label.site-opt[data-site="${site.id}"] .site-opt-changed-badge`);
+    if (badgeEl) badgeEl.classList.toggle('show', changedSinceBackup);
+  });
 }
 
 let lastExportCode = null;
@@ -1571,6 +1650,11 @@ async function generateExportCode() {
   // 既存の.overwriteHiddenNote等と同じく、名前は出さず件数のみを記録する）。
   recordTransferHistoryEntry('export', selectedIds, hiddenExportSites.length);
   renderTransferHistory();
+  // 🆕 次回のために、今回チェックが入っていたサイト選択を記憶する。
+  saveLastExportSelection(selectedIds);
+  // 🆕 前回バックアップからの変更目印を今回のバックアップ時点に合わせて更新する
+  // （チェックボックスの選択状態は変えず、目印の表示/非表示だけを切り替える）。
+  updateExportChangedBadges();
 
   renderExportOutput();
   statusEl.className = 'status-msg';
@@ -1839,6 +1923,11 @@ let lastImportDetected = null; // array of matched SITE_CATALOG entries
 let lastImportDataKeys = null;
 let lastImportOverwriteInfo = null; // { visible, hiddenOverwriteCount, newProfiles, hasOverwriteRisk }（renderImportChecklist()で算出）
 let importOverwriteConfirming = false; // ⚠️ 上書きが発生する復元の2段階確認state
+// 🆕 サイト単位ではなくプロフィール単位での引き継ぎ絞り込み（インポート側）：エクスポート側の
+// exportProfileFiltersと同じ形（サイトid→'all'または特定のプロフィールid）。新しいコードを
+// 読み込むたび（processImportCode()）にリセットする（別のコードでは登場するプロフィールの
+// 顔ぶれ自体が変わるため）。
+let importProfileFilters = {};
 
 async function loadCodeForImport() {
   const code = document.getElementById('importCodeInput').value.trim();
@@ -1874,6 +1963,7 @@ async function processImportCode(code) {
   lastImportDataKeys = null;
   lastImportOverwriteInfo = null;
   importOverwriteConfirming = false;
+  importProfileFilters = {};
   renderImportSiteArea();
 
   let payload;
@@ -2114,6 +2204,9 @@ function renderImportChecklist() {
     return;
   }
 
+  // 🆕 サイト単位ではなくプロフィール単位での引き継ぎ絞り込み：選択肢に出すのは、この
+  // コードの送り出し側に登録されていたプロフィール一覧（この端末側の一覧ではない）。
+  const importedProfiles = getImportedProfilesList();
   siteAreaEl.innerHTML = warningHtml +
     `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
     `<div class="list-select-row">
@@ -2122,13 +2215,47 @@ function renderImportChecklist() {
     </div>` +
     lastImportOverwriteInfo.visible.map(({ site, hasLocalData }) => {
       const matched = matchKeysForSite(site, lastImportDataKeys);
-      return `
-        <label class="site-opt">
+      // 🆕 コードの中に複数のプロフィール分のデータが含まれている場合のみ、サイトごとの
+      // プロフィール絞り込みセレクターを表示する（エクスポート側と同じ条件・見た目）。
+      const showProfileFilter = site.namespaced && importedProfiles.length > 1;
+      const filterVal = showProfileFilter ? (importProfileFilters[site.id] || 'all') : 'all';
+      const filteredMatched = filterVal === 'all' ? matched : matchKeysForSiteProfile(site, lastImportDataKeys, filterVal);
+      const rowHtml = `
+        <label class="site-opt ${showProfileFilter ? 'has-profile-filter' : ''}" data-site="${site.id}">
           <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked>
           <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
-          <span class="site-opt-count">${t('dyn.keysCount', { n: matched.length })}${hasLocalData ? ' ⚠️' : ''}</span>
+          <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}${hasLocalData ? ' ⚠️' : ''}</span>
         </label>`;
+      const profileRowHtml = showProfileFilter ? `
+        <div class="site-opt-profile-row">
+          <span aria-hidden="true">👤</span>
+          <select class="site-profile-filter" data-site="${site.id}"
+            onchange="onImportProfileFilterChange('${site.id}', this.value)"
+            aria-label="${escapeHtml(t('page.profileFilterAriaLabel', { site: siteLabel(site) }))}">
+            <option value="all" ${filterVal === 'all' ? 'selected' : ''}>${escapeHtml(t('page.allProfilesOption'))} (${t('dyn.keysCount', { n: matched.length })})</option>
+            ${importedProfiles.map(p => {
+              const cnt = matchKeysForSiteProfile(site, lastImportDataKeys, p.id).length;
+              return `<option value="${escapeHtml(p.id)}" ${filterVal === p.id ? 'selected' : ''}>${escapeHtml(profileDisplayName(p))} (${t('dyn.keysCount', { n: cnt })})</option>`;
+            }).join('')}
+          </select>
+        </div>` : '';
+      return rowHtml + profileRowHtml;
     }).join('');
+}
+
+// 🆕 サイトごとのプロフィール絞り込みセレクター（インポート側）の変更ハンドラ。エクスポート側の
+// onExportProfileFilterChange()と同じく、チェックボックスの選択状態を保ったまま、変更された
+// サイトの件数表示だけをピンポイントで更新する（renderImportChecklist()を丸ごと再実行すると
+// 上書き警告ボックスの再計算や他サイトのチェック状態リセットを伴ってしまうため）。
+function onImportProfileFilterChange(siteId, value) {
+  importProfileFilters[siteId] = value;
+  const site = SITE_CATALOG.find(s => s.id === siteId);
+  if (!site || !lastImportDataKeys) return;
+  const filtered = matchKeysForSiteProfile(site, lastImportDataKeys, value);
+  const countEl = document.querySelector(`#importSiteArea label.site-opt[data-site="${siteId}"] .site-opt-count`);
+  if (!countEl) return;
+  const hasLocalData = !!(lastImportOverwriteInfo && lastImportOverwriteInfo.visible.some(v => v.site.id === siteId && v.hasLocalData));
+  countEl.textContent = t('dyn.keysCount', { n: filtered.length }) + (hasLocalData ? ' ⚠️' : '');
 }
 
 // ⚠️ 上書きが発生する場合は、確認ボタンの1クリックでは即実行せず、詳細説明＋2回目の
@@ -2182,9 +2309,18 @@ function confirmImport() {
   // （bug #1）。
   const { count: registryCount, newProfiles } = applyProfileMerge(pendingImportData);
   count += registryCount;
+  // 🆕 サイトごとにプロフィール絞り込み（importProfileFilters）が指定されていれば、
+  // そのサイトについては該当プロフィール分のキーだけを復元する。選択中の値がこの
+  // コードに実在するプロフィールでない（表示後にコードが読み込み直された等）場合は、
+  // データを静かに0件にしてしまわないよう安全側の'all'（従来どおり全プロフィール分）
+  // にフォールバックする（generateExportCode()側の同種の安全策と同じ考え方）。
+  const importedProfilesNow = getImportedProfilesList();
   selectedIds.forEach(id => {
     const site = SITE_CATALOG.find(s => s.id === id);
-    matchKeysForSite(site, dataKeys).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
+    const requestedFilter = importProfileFilters[id];
+    const validFilter = (requestedFilter && requestedFilter !== 'all' && importedProfilesNow.some(p => p.id === requestedFilter))
+      ? requestedFilter : 'all';
+    matchKeysForSiteProfile(site, dataKeys, validFilter).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
   });
   // 🌳 hidden:true のサイトはチェックリストに出ないため選択できないが、コードに含まれて
   // いれば選択の有無に関わらず常に復元する（既存データを静かに落とさないため）。
@@ -2205,6 +2341,7 @@ function confirmImport() {
   lastImportDataKeys = null;
   lastImportOverwriteInfo = null;
   importOverwriteConfirming = false;
+  importProfileFilters = {};
   document.getElementById('importSiteArea').innerHTML = '';
   document.getElementById('importConfirmArea').innerHTML = '';
   document.getElementById('importCodeInput').value = '';
