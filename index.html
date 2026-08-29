@@ -394,6 +394,7 @@
       <div class="list-select-row">
         <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', true)" data-i18n="page.selectAllBtn"></button>
         <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#exportSiteList .site-checkbox', false)" data-i18n="page.selectNoneBtn"></button>
+        <button type="button" class="list-select-btn" onclick="selectSitesWithDataOnly('#exportSiteList')" data-i18n="page.selectWithDataBtn"></button>
       </div>
       <div id="exportSiteList"></div>
       <button type="button" class="action-btn primary" onclick="generateExportCode()" data-i18n="page.createCodeBtn"></button>
@@ -531,6 +532,7 @@ const I18N = {
     'page.pastePlaceholder': 'ここに引き継ぎコードを貼り付け',
     'page.selectAllBtn': '全選択',
     'page.selectNoneBtn': '全解除',
+    'page.selectWithDataBtn': 'データがあるサイトだけ',
     'footer.disclaimer': 'このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。',
     'footer.creditLabel': '作成・ご意見:',
     'footer.requestForm': 'リクエストフォーム',
@@ -646,6 +648,7 @@ const I18N = {
     'page.pastePlaceholder': 'Paste your transfer code here',
     'page.selectAllBtn': 'Select All',
     'page.selectNoneBtn': 'Deselect All',
+    'page.selectWithDataBtn': 'Only sites with data',
     'footer.disclaimer': 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.',
     'footer.creditLabel': 'Created by / feedback:',
     'footer.requestForm': 'Request form',
@@ -1197,6 +1200,14 @@ function getImportedProfilesList() {
 // ✅ エクスポート／インポート、両方のサイト選択チェックリスト共通の「全選択／全解除」処理
 function setAllSiteCheckboxes(selector, checked) {
   document.querySelectorAll(selector).forEach(cb => { cb.checked = checked; });
+}
+
+// データがあるサイトだけをチェックし、データが無いサイト（.no-data）は解除する
+function selectSitesWithDataOnly(containerSelector) {
+  document.querySelectorAll(`${containerSelector} label.site-opt`).forEach(label => {
+    const cb = label.querySelector('input[type="checkbox"]');
+    if (cb) cb.checked = !label.classList.contains('no-data');
+  });
 }
 
 /* ================================================================
