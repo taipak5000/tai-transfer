@@ -121,6 +121,8 @@
     }
     .sidebar-nav-link:hover { background: var(--bg); }
     .sidebar-nav-link.current-tool { background: var(--purple-bg); color: var(--purple-d); font-weight: 700; }
+    /* 精度に不安がある新機能であることを示す小さな注記（例: 楽譜づくり） */
+    .tool-badge-test { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.3px; }
 
     .sec-label { font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.4px; padding: 22px 4px 10px; }
     .card { background: var(--card); border-radius: var(--r); padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
@@ -376,6 +378,7 @@
     <a href="https://taipak5000.github.io/star-candle/" class="sidebar-nav-link" data-i18n="tools.starCandle"></a>
     <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link" data-i18n="tools.companion"></a>
     <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link" data-i18n="tools.wings"></a>
+    <a href="https://taipak5000.github.io/tai-score/" class="sidebar-nav-link"><span class="tool-badge-test">test</span><span data-i18n="tools.score">🎵 楽譜づくり</span></a>
     <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool" data-i18n="tools.dataTransfer"></a>
     <a href="https://taipak5000.github.io/tai-info/" class="sidebar-nav-link" data-i18n="tools.taiInfo"></a>
   </aside>
@@ -506,6 +509,7 @@ const I18N = {
     'tools.starCandle': '🕯️ 星のキャンドル計算機',
     'tools.companion': '✨ 精霊同行ツール',
     'tools.wings': '🪽 羽トラッカー',
+    'tools.score': '🎵 楽譜づくり',
     'tools.dataTransfer': '🔄 データ引継ぎ',
     'tools.taiInfo': '⚙️ 設定・更新情報',
     'sidebar.hamburgerToggle': '☰ ツール',
@@ -619,6 +623,7 @@ const I18N = {
     'tools.starCandle': '🕯️ Star Candle Calculator',
     'tools.companion': '✨ Spirit Companion Tool',
     'tools.wings': '🪽 Wing Tracker',
+    'tools.score': '🎵 Sheet Music Maker',
     'tools.dataTransfer': '🔄 Data Transfer',
     'tools.taiInfo': '⚙️ Settings & Updates',
     'sidebar.hamburgerToggle': '☰ Tools',
@@ -1022,11 +1027,9 @@ const SITE_CATALOG = [
     'catalogShareCustomize_v1', // 🎨 共有画像のテーマカスタマイズ（index.html参照）
     'spiritCatalogTitles_v1' // 🏆 姉妹サイト横断の称号カタログ用、獲得称号（TITLES_KEY_RAW参照）
   ]},
-  // 🎵 楽譜づくり（tai-score）も精霊ツリー管理と同様、まだ一般公開しておらず
-  // 他サイトのサイドバーからもリンクを外している（未完成のため）ので hidden:true
-  // として扱う。プロフィール機構は使っておらずキーはグローバル（namespaced:false）。
-  // 作成した楽譜データを引き継ぎから静かに消さないよう、対象キーとしては常に含める。
-  { id: 'score', label: '🎵 楽譜づくり', labelEn: '🎵 Sheet Music Maker', namespaced: false, hidden: true, keys: [
+  // 🎵 楽譜づくり（tai-score）は公開済み。プロフィール機構は使っておらずキーは
+  // グローバル（namespaced:false）。
+  { id: 'score', label: '🎵 楽譜づくり', labelEn: '🎵 Sheet Music Maker', namespaced: false, keys: [
     'taiScoreSongs_v1', 'taiScoreKeyBindings_v1', 'taiScoreInputMode_v1', 'taiScoreFreePlayInstrument_v1',
     // 🏆 獲得称号（TITLES_KEY参照）／📚 曲一覧の並び替え順・🎹 メトロノームON/OFF
     // （いずれもnsKey()を経由しないグローバルキー、上の設定系キーと同じ理由でここに含める）
