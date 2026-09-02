@@ -376,10 +376,10 @@
     <a href="https://taipak5000.github.io/star-candle/" class="sidebar-nav-link" data-i18n="tools.starCandle"></a>
     <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link" data-i18n="tools.companion"></a>
     <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link" data-i18n="tools.wings"></a>
-    <a href="https://taipak5000.github.io/tai-score/" class="sidebar-nav-link"><span class="tool-badge-test">test</span><span data-i18n="tools.score">🎵 楽譜づくり</span></a>
+    <a href="https://taipak5000.github.io/tai-score/" class="sidebar-nav-link"><span class="tool-badge-test">test</span><span data-i18n="tools.score">楽譜づくり</span></a>
     <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool" data-i18n="tools.dataTransfer"></a>
     <a href="https://taipak5000.github.io/tai-info/" class="sidebar-nav-link" data-i18n="tools.taiInfo"></a>
-    <a href="https://taipak5000.github.io/skyzztai-profile/" class="sidebar-nav-link"><span data-i18n="tools.profile">👤 作者プロフィール</span></a>
+    <a href="https://taipak5000.github.io/skyzztai-profile/" class="sidebar-nav-link"><span data-i18n="tools.profile">作者プロフィール</span></a>
   </aside>
 
   <div class="wrap">
@@ -424,7 +424,6 @@
     <div class="settings-section">
       <p class="settings-section-label" data-i18n="settings.displayLabel"></p>
       <div class="settings-row">
-        <span>🌙</span>
         <span class="settings-row-text" data-i18n="settings.darkModeLabel"></span>
         <button type="button" class="theme-toggle-btn" id="settingsThemeBtn" onclick="toggleTheme()"></button>
       </div>
@@ -433,7 +432,6 @@
     <div class="settings-section">
       <p class="settings-section-label" data-i18n="settings.shortcutsLabel"></p>
       <div class="settings-row">
-        <span>⌨️</span>
         <span class="settings-row-text" data-i18n="settings.shortcutsEnableLabel"></span>
         <input type="checkbox" id="shortcutsCheckbox" onchange="onShortcutsCheckboxChange()" style="width:19px; height:19px; flex-shrink:0; cursor:pointer; accent-color:var(--purple);">
       </div>
@@ -502,31 +500,31 @@ let LANG = localStorage.getItem(LANG_KEY) || 'ja';
 const I18N = {
   ja: {
     'page.title': 'データ引継ぎ - Sky所持率管理',
-    'tools.item': '🗂️ アイテム所持管理',
-    'tools.emote': '🎭 エモート所持率管理',
-    'tools.share': '📍 創作物管理ツール',
-    'tools.taiNomacan': '🕯️ ノマキャン計算機',
-    'tools.starCandle': '🕯️ 星のキャンドル計算機',
-    'tools.companion': '✨ 精霊同行ツール',
-    'tools.wings': '🪽 羽トラッカー',
-    'tools.score': '🎵 楽譜づくり',
+    'tools.item': 'アイテム所持管理',
+    'tools.emote': 'エモート所持率管理',
+    'tools.share': '創作物管理ツール',
+    'tools.taiNomacan': 'ノマキャン計算機',
+    'tools.starCandle': '星のキャンドル計算機',
+    'tools.companion': '精霊同行ツール',
+    'tools.wings': '羽トラッカー',
+    'tools.score': '楽譜づくり',
     'tools.dataTransfer': '🔄 データ引継ぎ',
-    'tools.taiInfo': '⚙️ 設定・更新情報',
-    'tools.profile': '👤 作者プロフィール',
+    'tools.taiInfo': '設定・更新情報',
+    'tools.profile': '作者プロフィール',
     'sidebar.hamburgerToggle': '☰ ツール',
-    'sidebar.relatedToolsLabel': '🔗 関連ツール',
+    'sidebar.relatedToolsLabel': '関連ツール',
     'dock.ariaLabel': 'クイックメニュー',
     'dock.export': 'エクスポート',
     'dock.import': 'インポート',
     'dock.otherTools': '他のツール',
     'dock.settings': '表示設定',
-    'page.sectionExport': '📤 引き継ぎコードを作成',
-    'page.sectionImport': '📥 コードから復元',
+    'page.sectionExport': '引き継ぎコードを作成',
+    'page.sectionImport': 'コードから復元',
     'page.exportHint': 'Dropbox等の外部サービスを使わず、ファイルまたはコピー&ペーストで端末間のデータを引き継げます。引き継ぎたいサイトだけを選んでコードを作成し、別の端末の「コードから復元」に読み込んでください。コードは自動で圧縮されますが、長くなりやすいので「ファイルとしてダウンロード」がおすすめです（AirDropやメッセージアプリへの添付で送れます）。このブラウザに保存されているデータが対象で、taipak5000.github.io系ツール共通のプロフィール（保存枠）は常に一緒に引き継がれます。',
     'page.importHint': '別の端末で作成した引き継ぎコードを、ファイルから読み込むか、ここに貼り付けてください。コードに含まれるサイトが自動で検出され、その中から復元したいものだけを選べます。',
     'page.pasteHint': 'またはコードを直接貼り付け：',
-    'page.createCodeBtn': '📋 選んだサイトのコードを作成',
-    'page.loadCodeBtn': '🔍 コードを読み込む',
+    'page.createCodeBtn': '選んだサイトのコードを作成',
+    'page.loadCodeBtn': 'コードを読み込む',
     'page.pastePlaceholder': 'ここに引き継ぎコードを貼り付け',
     'page.selectAllBtn': '全選択',
     'page.selectNoneBtn': '全解除',
@@ -534,21 +532,21 @@ const I18N = {
     'footer.disclaimer': 'このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。',
     'footer.creditLabel': '作成・ご意見:',
     'footer.requestForm': 'リクエストフォーム',
-    'footer.infoLink': '⚙️ 設定・更新情報・クレジット・プライバシーポリシー',
-    'settings.entryBtnTitle': '⚙️ 表示設定',
-    'settings.title': '⚙️ 表示設定',
-    'settings.displayLabel': '🌙 表示',
+    'footer.infoLink': '設定・更新情報・クレジット・プライバシーポリシー',
+    'settings.entryBtnTitle': '表示設定',
+    'settings.title': '表示設定',
+    'settings.displayLabel': '表示',
     'settings.darkModeLabel': 'ダークモード',
-    'settings.themeDark': '🌙 ダーク',
-    'settings.themeLight': '☀️ ライト',
-    'settings.themeSystem': '🖥️ システム',
+    'settings.themeDark': 'ダーク',
+    'settings.themeLight': 'ライト',
+    'settings.themeSystem': 'システム',
     'settings.themeAriaLabel': vars => `${vars.current}（タップで${vars.next}に切替）`,
-    'settings.shortcutsLabel': '⌨️ キーボードショートカット',
+    'settings.shortcutsLabel': 'キーボードショートカット',
     'settings.shortcutsEnableLabel': 'ショートカットを有効にする',
     'settings.shortcutOpen': 'この設定を開く',
     'settings.shortcutTheme': 'ダークモード切替',
     'settings.shortcutEscape': '開いているウィンドウを閉じる',
-    'settings.langLabel': '🌐 言語',
+    'settings.langLabel': '言語',
     'settings.closeBtn': '閉じる',
     'dyn.creatingCode': 'コードを作成中…',
     'dyn.selectAtLeastOneSite': '少なくとも1つサイトを選んでください。',
@@ -557,10 +555,10 @@ const I18N = {
     'dyn.exportSummary': '選択したサイト: {sites}（{count}件のキー、コード{length}文字{compressNote}）',
     'dyn.hiddenOnlyExportSummary': '非公開ツールのデータのみが含まれています（{count}件のキー、コード{length}文字{compressNote}）',
     'dyn.compressNote': '　圧縮で約{rate}%短縮済み',
-    'dyn.downloadBtn': '⬇️ ファイルとしてダウンロード（推奨）',
-    'dyn.showCodeBtn': '📋 コードをテキストで表示してコピー',
-    'dyn.copyCodeBtn': '📋 コードをコピー',
-    'dyn.showQrBtn': '📱 QRコードを表示',
+    'dyn.downloadBtn': 'ファイルとしてダウンロード（推奨）',
+    'dyn.showCodeBtn': 'コードをテキストで表示してコピー',
+    'dyn.copyCodeBtn': 'コードをコピー',
+    'dyn.showQrBtn': 'QRコードを表示',
     'dyn.qrLoading': 'QRコードを準備中…',
     'dyn.qrAlt': 'データ引き継ぎ用のQRコード',
     'dyn.qrCaption': '別の端末のカメラや読み取りアプリでスキャンしてください。',
@@ -575,13 +573,13 @@ const I18N = {
     'dyn.noMatchingSiteData': 'コードの中に、対応するサイトのデータが見つかりませんでした。',
     'dyn.selectSitesToRestore': '復元するサイトを選んでください：',
     'dyn.hiddenOnlyImportNotice': '非公開ツールのデータのみが含まれています。',
-    'dyn.restoreBtn': '✅ 選んだサイトを復元する',
+    'dyn.restoreBtn': '選んだサイトを復元する',
     'dyn.restoreSuccess': '{n}件のキーを復元しました。',
-    'dyn.siteUpdatedListHeading': '🕒 各サイトの最終更新（このツールで検知した限りの日時）',
+    'dyn.siteUpdatedListHeading': '各サイトの最終更新（このツールで検知した限りの日時）',
     'dyn.overwriteSitesLabel': '⚠️ 既にこの端末にデータがあり、上書きされるサイト：',
     'dyn.overwriteHiddenNote': '（このほか非公開ツールのデータも{n}件、上書きされます）',
     'dyn.overwriteHiddenOnlyLabel': '⚠️ 非公開ツールのデータ{n}件が、既にこの端末にあるデータを上書きします。',
-    'dyn.newProfilesLabel': '🆕 新しいプロフィールが{n}件追加されます：{names}',
+    'dyn.newProfilesLabel': '新しいプロフィールが{n}件追加されます：{names}',
     'dyn.importCodeDateLabel': 'コード内',
     'dyn.importLocalDateLabel': 'ローカル',
     'dyn.importLocalNewerFlag': ' ❗ローカルの方が新しい可能性があります',
@@ -598,19 +596,19 @@ const I18N = {
     'dyn.changedSinceBackupTitle': '前回のバックアップから内容が変わっています',
     'page.allProfilesOption': 'すべてのプロフィール',
     'page.profileFilterAriaLabel': '{site}の引き継ぎプロフィールを絞り込む',
-    'dyn.diffSummaryPrefix': '📊 内容差分：',
+    'dyn.diffSummaryPrefix': '内容差分：',
     'dyn.diffEntriesAdded': '新規データ{n}件',
     'dyn.diffTitlesAdded': '称号{n}件を新たに獲得',
     'dyn.diffEntriesChanged': '{n}件の内容が変化',
     'dyn.diffEntriesRemoved': 'ローカルのみのデータ{n}件は消えます',
-    'dyn.showLinkBtn': '🔗 リンクとしてコピー',
-    'dyn.copyLinkBtn': '🔗 リンクをコピー',
+    'dyn.showLinkBtn': 'リンクとしてコピー',
+    'dyn.copyLinkBtn': 'リンクをコピー',
     'dyn.copyLinkSuccess': 'リンクをコピーしました。別の端末でこのリンクを開くと、コードが自動で読み込まれます。',
     'dyn.copyLinkFailed': 'コピーに失敗しました。リンクが選択された状態なので、手動でコピーしてください。',
-    'dyn.linkTooLongNote': '⚠️ リンクが長くなっています。開く環境によってはうまく機能しない場合があります。心配な場合はファイルまたはQRコードもご利用ください。',
-    'dyn.linkAutoLoadedNotice': '🔗 リンクからコードを読み込みました。復元したいサイトを選んでください。',
-    'dyn.showHistoryBtn': '🕒 書き出し/読込履歴を見る',
-    'dyn.hideHistoryBtn': '🕒 履歴を隠す',
+    'dyn.linkTooLongNote': 'リンクが長くなっています。開く環境によってはうまく機能しない場合があります。心配な場合はファイルまたはQRコードもご利用ください。',
+    'dyn.linkAutoLoadedNotice': 'リンクからコードを読み込みました。復元したいサイトを選んでください。',
+    'dyn.showHistoryBtn': '書き出し/読込履歴を見る',
+    'dyn.hideHistoryBtn': '履歴を隠す',
     'dyn.historyHiddenNote': '非公開ツール{n}件',
     'dyn.historyNoSites': '（サイトなし）',
     'dyn.historyExportRowLabel': '書き出し：{date}・{sites}',
@@ -618,31 +616,31 @@ const I18N = {
   },
   en: {
     'page.title': 'Data Transfer - Sky Collection Tracker',
-    'tools.item': '🗂️ Item Collection',
-    'tools.emote': '🎭 Emote Collection',
-    'tools.share': '📍 Creation Manager',
-    'tools.taiNomacan': '🕯️ Nomacan Calculator',
-    'tools.starCandle': '🕯️ Star Candle Calculator',
-    'tools.companion': '✨ Spirit Companion Tool',
-    'tools.wings': '🪽 Wing Tracker',
-    'tools.score': '🎵 Sheet Music Maker',
+    'tools.item': 'Item Collection',
+    'tools.emote': 'Emote Collection',
+    'tools.share': 'Creation Manager',
+    'tools.taiNomacan': 'Nomacan Calculator',
+    'tools.starCandle': 'Star Candle Calculator',
+    'tools.companion': 'Spirit Companion Tool',
+    'tools.wings': 'Wing Tracker',
+    'tools.score': 'Sheet Music Maker',
     'tools.dataTransfer': '🔄 Data Transfer',
-    'tools.taiInfo': '⚙️ Settings & Updates',
-    'tools.profile': '👤 Creator Profile',
+    'tools.taiInfo': 'Settings & Updates',
+    'tools.profile': 'Creator Profile',
     'sidebar.hamburgerToggle': '☰ Tools',
-    'sidebar.relatedToolsLabel': '🔗 Related Tools',
+    'sidebar.relatedToolsLabel': 'Related Tools',
     'dock.ariaLabel': 'Quick Menu',
     'dock.export': 'Export',
     'dock.import': 'Import',
     'dock.otherTools': 'More Tools',
     'dock.settings': 'Settings',
-    'page.sectionExport': '📤 Create a Transfer Code',
-    'page.sectionImport': '📥 Restore from a Code',
+    'page.sectionExport': 'Create a Transfer Code',
+    'page.sectionImport': 'Restore from a Code',
     'page.exportHint': "You can transfer data between devices using a file or copy & paste, without any external service like Dropbox. Select only the sites you want to bring over to generate a code, then load it into \"Restore from a Code\" on another device. The code is compressed automatically, but it can still get long, so downloading it as a file is recommended (you can send it via AirDrop or as a message attachment). This applies to data stored in this browser — the profiles (save slots) shared across taipak5000.github.io tools are always carried over together with it.",
     'page.importHint': 'Load the transfer code created on another device from a file, or paste it below. The sites contained in the code are detected automatically, and you can choose which ones to restore.',
     'page.pasteHint': 'Or paste the code directly:',
-    'page.createCodeBtn': '📋 Create Code for Selected Sites',
-    'page.loadCodeBtn': '🔍 Load Code',
+    'page.createCodeBtn': 'Create Code for Selected Sites',
+    'page.loadCodeBtn': 'Load Code',
     'page.pastePlaceholder': 'Paste your transfer code here',
     'page.selectAllBtn': 'Select All',
     'page.selectNoneBtn': 'Deselect All',
@@ -650,21 +648,21 @@ const I18N = {
     'footer.disclaimer': 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.',
     'footer.creditLabel': 'Created by / feedback:',
     'footer.requestForm': 'Request form',
-    'footer.infoLink': "⚙️ Settings / What's New / Credits / Privacy Policy",
-    'settings.entryBtnTitle': '⚙️ Display Settings',
-    'settings.title': '⚙️ Display Settings',
-    'settings.displayLabel': '🌙 Display',
+    'footer.infoLink': "Settings / What's New / Credits / Privacy Policy",
+    'settings.entryBtnTitle': 'Display Settings',
+    'settings.title': 'Display Settings',
+    'settings.displayLabel': 'Display',
     'settings.darkModeLabel': 'Dark Mode',
-    'settings.themeDark': '🌙 Dark',
-    'settings.themeLight': '☀️ Light',
-    'settings.themeSystem': '🖥️ System',
+    'settings.themeDark': 'Dark',
+    'settings.themeLight': 'Light',
+    'settings.themeSystem': 'System',
     'settings.themeAriaLabel': vars => `${vars.current} (tap to switch to ${vars.next})`,
-    'settings.shortcutsLabel': '⌨️ Keyboard Shortcuts',
+    'settings.shortcutsLabel': 'Keyboard Shortcuts',
     'settings.shortcutsEnableLabel': 'Enable keyboard shortcuts',
     'settings.shortcutOpen': 'Open this settings panel',
     'settings.shortcutTheme': 'Toggle dark mode',
     'settings.shortcutEscape': 'Close the open window',
-    'settings.langLabel': '🌐 Language',
+    'settings.langLabel': 'Language',
     'settings.closeBtn': 'Close',
     'dyn.creatingCode': 'Creating code…',
     'dyn.selectAtLeastOneSite': 'Please select at least one site.',
@@ -673,10 +671,10 @@ const I18N = {
     'dyn.exportSummary': 'Selected sites: {sites} ({count} keys, code is {length} characters{compressNote})',
     'dyn.hiddenOnlyExportSummary': 'Only data from private (unpublished) tools is included ({count} keys, code is {length} characters{compressNote})',
     'dyn.compressNote': ' · Compressed by about {rate}%',
-    'dyn.downloadBtn': '⬇️ Download as File (Recommended)',
-    'dyn.showCodeBtn': '📋 Show Code as Text to Copy',
-    'dyn.copyCodeBtn': '📋 Copy Code',
-    'dyn.showQrBtn': '📱 Show QR Code',
+    'dyn.downloadBtn': 'Download as File (Recommended)',
+    'dyn.showCodeBtn': 'Show Code as Text to Copy',
+    'dyn.copyCodeBtn': 'Copy Code',
+    'dyn.showQrBtn': 'Show QR Code',
     'dyn.qrLoading': 'Preparing QR code…',
     'dyn.qrAlt': 'QR code for data transfer',
     'dyn.qrCaption': 'Scan this with another device\'s camera or a QR reader app.',
@@ -691,13 +689,13 @@ const I18N = {
     'dyn.noMatchingSiteData': 'No supported site data was found in this code.',
     'dyn.selectSitesToRestore': 'Select the sites to restore:',
     'dyn.hiddenOnlyImportNotice': 'Only data from private (unpublished) tools is included.',
-    'dyn.restoreBtn': '✅ Restore Selected Sites',
+    'dyn.restoreBtn': 'Restore Selected Sites',
     'dyn.restoreSuccess': vars => `Restored ${vars.n} ${vars.n === 1 ? 'key' : 'keys'}.`,
-    'dyn.siteUpdatedListHeading': '🕒 Last updated per site (as detected by this tool)',
+    'dyn.siteUpdatedListHeading': 'Last updated per site (as detected by this tool)',
     'dyn.overwriteSitesLabel': '⚠️ Sites that already have local data on this device and will be overwritten:',
     'dyn.overwriteHiddenNote': vars => ` (plus data from ${vars.n} private ${vars.n === 1 ? 'tool' : 'tools'}, also overwritten)`,
     'dyn.overwriteHiddenOnlyLabel': vars => `⚠️ Data from ${vars.n} private ${vars.n === 1 ? 'tool' : 'tools'} will overwrite data already on this device.`,
-    'dyn.newProfilesLabel': vars => `🆕 ${vars.n} new ${vars.n === 1 ? 'profile' : 'profiles'} will be added: ${vars.names}`,
+    'dyn.newProfilesLabel': vars => `${vars.n} new ${vars.n === 1 ? 'profile' : 'profiles'} will be added: ${vars.names}`,
     'dyn.importCodeDateLabel': 'in code',
     'dyn.importLocalDateLabel': 'local',
     'dyn.importLocalNewerFlag': ' ❗ Local data may be newer',
@@ -714,19 +712,19 @@ const I18N = {
     'dyn.changedSinceBackupTitle': 'Changed since your last backup',
     'page.allProfilesOption': 'All profiles',
     'page.profileFilterAriaLabel': 'Filter transferred profile for {site}',
-    'dyn.diffSummaryPrefix': '📊 Content diff: ',
+    'dyn.diffSummaryPrefix': 'Content diff: ',
     'dyn.diffEntriesAdded': vars => `${vars.n} new ${vars.n === 1 ? 'entry' : 'entries'}`,
     'dyn.diffTitlesAdded': vars => `${vars.n} new ${vars.n === 1 ? 'title' : 'titles'}`,
     'dyn.diffEntriesChanged': vars => `${vars.n} ${vars.n === 1 ? 'entry' : 'entries'} changed`,
     'dyn.diffEntriesRemoved': vars => `${vars.n} local-only ${vars.n === 1 ? 'entry' : 'entries'} would be lost`,
-    'dyn.showLinkBtn': '🔗 Copy as Link',
-    'dyn.copyLinkBtn': '🔗 Copy Link',
+    'dyn.showLinkBtn': 'Copy as Link',
+    'dyn.copyLinkBtn': 'Copy Link',
     'dyn.copyLinkSuccess': 'Link copied. Opening it on another device will load the code automatically.',
     'dyn.copyLinkFailed': 'Copy failed. The link is selected, so please copy it manually.',
-    'dyn.linkTooLongNote': "⚠️ This link is quite long. It may not work well in some apps — consider the file or QR code options if you're concerned.",
-    'dyn.linkAutoLoadedNotice': '🔗 Code loaded from a link. Select the sites you want to restore.',
-    'dyn.showHistoryBtn': '🕒 View Transfer History',
-    'dyn.hideHistoryBtn': '🕒 Hide History',
+    'dyn.linkTooLongNote': "This link is quite long. It may not work well in some apps — consider the file or QR code options if you're concerned.",
+    'dyn.linkAutoLoadedNotice': 'Code loaded from a link. Select the sites you want to restore.',
+    'dyn.showHistoryBtn': 'View Transfer History',
+    'dyn.hideHistoryBtn': 'Hide History',
     'dyn.historyHiddenNote': vars => `${vars.n} private ${vars.n === 1 ? 'tool' : 'tools'}`,
     'dyn.historyNoSites': '(no sites)',
     'dyn.historyExportRowLabel': 'Export: {date} · {sites}',
@@ -959,7 +957,7 @@ function scrollToId(id) {
    その全プロフィール分をまとめて対象にする。
    ================================================================ */
 const SITE_CATALOG = [
-  { id: 'item', label: '🗂️ アイテム所持管理', labelEn: '🗂️ Item Collection', namespaced: true, keys: [
+  { id: 'item', label: 'アイテム所持管理', labelEn: 'Item Collection', namespaced: true, keys: [
     'gameItems_outfit', 'gameItems_shoes', 'gameItems_mask', 'gameItems_face_accessory', 'gameItems_necklace',
     'gameItems_hairstyle', 'gameItems_hair_accessory', 'gameItems_head_accessory', 'gameItems_cape',
     'gameItems_portable_item', 'gameItems_large_placeable', 'gameItems_small_placeable',
@@ -988,15 +986,15 @@ const SITE_CATALOG = [
     // 他サイトの各*Titles_v1と同様、nsKey()経由でプロフィール別）
     'itemTitles_v1', 'itemCostMoneySum_v1'
   ]},
-  { id: 'wings', label: '🪽 羽トラッカー', labelEn: '🪽 Wing Tracker', namespaced: true, keys: [
+  { id: 'wings', label: '羽トラッカー', labelEn: 'Wing Tracker', namespaced: true, keys: [
     'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1',
     'wingsShareCustomize_v1', // 🎨 共有画像のテーマカスタマイズ（index.html参照）
     'wingsTitles_v1' // 🏆 姉妹サイト横断の称号カタログ用、wings自身の獲得称号（titlesKey()参照）
   ]},
-  { id: 'companion', label: '✨ 精霊同行ツール', labelEn: '✨ Spirit Companion Tool', namespaced: true, keys: [
+  { id: 'companion', label: '精霊同行ツール', labelEn: 'Spirit Companion Tool', namespaced: true, keys: [
     'sky_companion_v4_data', 'sky_companion_records_meta_v1'
   ]},
-  { id: 'star-candle', label: '🕯️ 星のキャンドル計算機', labelEn: '🕯️ Star Candle Calculator', namespaced: true, keys: [
+  { id: 'star-candle', label: '星のキャンドル計算機', labelEn: 'Star Candle Calculator', namespaced: true, keys: [
     'skyStarCandleCalc_v1', 'skyStarCandleCalc_checkedDays_v1', 'skyStarCandleCalc_history_v1',
     // 🔭 予報の高確度のみ表示フィルタ／🔔 赤闇シャード・達成予定日の通知オン・オフと
     // 直近通知済みの記録（index.html参照。いずれもnsKey()経由でプロフィール別）
@@ -1007,16 +1005,16 @@ const SITE_CATALOG = [
     'skyStarCandleCalc_maxCandle_v1', 'skyStarCandleCalc_checkinLog_v1',
     'skyStarCandleCalc_streakBest_v1', 'skyStarCandleCalc_titles_v1'
   ]},
-  { id: 'nomacan', label: '🕯️ ノマキャン計算機', labelEn: '🕯️ Nomacan Calculator', namespaced: true, keys: [
+  { id: 'nomacan', label: 'ノマキャン計算機', labelEn: 'Nomacan Calculator', namespaced: true, keys: [
     'skyNomacanCalc_v1', 'skyNomacanCalc_history_v1', 'skyNomacanGoals_v1',
     // 🏆 連続回収日数の記録（streakKey）と獲得称号（titlesKey）
     'skyNomacanStreak_v1', 'skyNomacanTitles_v1'
   ]},
-  { id: 'share', label: '📍 創作物管理ツール', labelEn: '📍 Creation Manager', namespaced: true, keys: [
+  { id: 'share', label: '創作物管理ツール', labelEn: 'Creation Manager', namespaced: true, keys: [
     'sky_tracker_storage',
     'shareTitles_v1' // 🏆 姉妹サイト横断の称号カタログ用、share自身の獲得称号（TITLES_KEY参照）
   ]},
-  { id: 'emote', label: '🎭 エモート所持率管理', labelEn: '🎭 Emote Collection', namespaced: true, keys: [
+  { id: 'emote', label: 'エモート所持率管理', labelEn: 'Emote Collection', namespaced: true, keys: [
     'emoteOwned_v1', 'emoteShareCustomize_v1', 'emoteViewMode_v1',
     // 📝 エモートごとの入手日時ログ（複合キー"<emoteId>::<level>"、ACQUIRE_LOG_KEY参照）
     // ／🏆 獲得称号（TITLES_KEY参照）
@@ -1026,14 +1024,14 @@ const SITE_CATALOG = [
   // （hidden:true）。ただし既存ユーザーのデータを引き継ぎから静かに消さないよう、
   // エクスポート/インポートの対象キーとしてはそのまま扱う（PROFILE_REGISTRY_KEYSと
   // 同様、選択UIを介さず常に一緒に処理する）。
-  { id: 'spirit-catalog', label: '🌳 精霊ツリー管理', labelEn: '🌳 Spirit Tree Manager', namespaced: true, hidden: true, keys: [
+  { id: 'spirit-catalog', label: '精霊ツリー管理', labelEn: 'Spirit Tree Manager', namespaced: true, hidden: true, keys: [
     'spiritCatalogUnlocked_v1',
     'catalogShareCustomize_v1', // 🎨 共有画像のテーマカスタマイズ（index.html参照）
     'spiritCatalogTitles_v1' // 🏆 姉妹サイト横断の称号カタログ用、獲得称号（TITLES_KEY_RAW参照）
   ]},
   // 🎵 楽譜づくり（tai-score）は公開済み。プロフィール機構は使っておらずキーは
   // グローバル（namespaced:false）。
-  { id: 'score', label: '🎵 楽譜づくり', labelEn: '🎵 Sheet Music Maker', namespaced: false, keys: [
+  { id: 'score', label: '楽譜づくり', labelEn: 'Sheet Music Maker', namespaced: false, keys: [
     'taiScoreSongs_v1', 'taiScoreKeyBindings_v1', 'taiScoreInputMode_v1', 'taiScoreFreePlayInstrument_v1',
     // 🏆 獲得称号（TITLES_KEY参照）／📚 曲一覧の並び替え順・🎹 メトロノームON/OFF
     // （いずれもnsKey()を経由しないグローバルキー、上の設定系キーと同じ理由でここに含める）
@@ -1042,10 +1040,10 @@ const SITE_CATALOG = [
   // 🎴 星紡ぎカード（tai-card）もまだ一般公開しておらず、他サイトのサイドバーからも
   // リンクを外している（未告知のため）ので hidden:true として扱う。プロフィールごとに
   // nsKey()で分離される保存状態を持つため namespaced:true（tai-card/index.htmlのSTATE_KEY参照）。
-  { id: 'tai-card', label: '🎴 星紡ぎカード', labelEn: '🎴 Star-Spinning Cards', namespaced: true, hidden: true, keys: [
+  { id: 'tai-card', label: '星紡ぎカード', labelEn: 'Star-Spinning Cards', namespaced: true, hidden: true, keys: [
     'taiCardState_v1'
   ]},
-  { id: 'currency', label: '💰 所持通貨（共通）', labelEn: '💰 Owned Currency (Shared)', namespaced: true, keys: [
+  { id: 'currency', label: '所持通貨（共通）', labelEn: 'Owned Currency (Shared)', namespaced: true, keys: [
     'wishOwnCurrency', 'skyCurrencyExtra_v1'
   ]},
   // 🔒 このsky_tracker_storage_v3等のキー一式は、star-candle登場前の旧ノーマルキャンドル
@@ -1055,7 +1053,7 @@ const SITE_CATALOG = [
   // spirit-catalog/score/tai-cardと同様 hidden:true とし、ラベル（"リアルム/エリア情報"
   // という当該サイト固有の特徴的な機能名を含む）をチェックリストに出さない。既存データを
   // 引き継ぎから静かに消さないよう、対象キーとしては変わらず常に含める。
-  { id: 'skyzztai', label: '🕯️ ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', labelEn: '🕯️ Normal Candle Calculator (Legacy · Realm/Area Info)', namespaced: false, hidden: true, keys: [
+  { id: 'skyzztai', label: 'ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', labelEn: 'Normal Candle Calculator (Legacy · Realm/Area Info)', namespaced: false, hidden: true, keys: [
     'sky_tracker_storage_v3', 'sky_shard_sync_date', 'sky_skill_answered', 'sky_skill_level_key',
     'sky_current_time_mult', 'sky_area_view_mode', 'sky_atlas_bg_opacity'
   ]},
@@ -1067,7 +1065,7 @@ const SITE_CATALOG = [
   // （item/companion/wings/star-candle/tai-nomacan/tai-emote/spirit-catalog/tai-infoの
   // 各index.html・profiles.jsで実装コードを確認済み。shareは未対応で無印の
   // 'pfCustomHomeIcon_v1'のまま＝対象外）。
-  { id: 'homeIcon', label: '🏠 ホーム画面アイコン設定（サイト別）', labelEn: '🏠 Home Screen Icon (Per Site)', namespaced: false, keys: [
+  { id: 'homeIcon', label: 'ホーム画面アイコン設定（サイト別）', labelEn: 'Home Screen Icon (Per Site)', namespaced: false, keys: [
     'pfCustomHomeIcon_v1__site_tai-item', 'pfCustomHomeIcon_v1__site_companion',
     'pfCustomHomeIcon_v1__site_wings', 'pfCustomHomeIcon_v1__site_star-candle',
     'pfCustomHomeIcon_v1__site_tai-nomacan', 'pfCustomHomeIcon_v1__site_tai-emote',
