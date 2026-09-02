@@ -1101,9 +1101,16 @@ function previewProfileMerge(importedData) {
   const newProfiles = importedList.filter(p => p && typeof p.id === 'string' && !localIds.has(p.id));
   return { localList, importedList, newProfiles, hasImportedRegistry: raw !== undefined };
 }
-function applyProfileMerge(importedData) {
+// allowedProfileIds（Setまたはnull/undefined）を渡すと、新規プロフィール（newProfiles）の
+// うち、そのSetに含まれるidだけをこの端末のプロフィール一覧に追加する。省略時（null/
+// undefined）は従来どおり全件追加する。サイトごとのプロフィール絞り込み（インポートの
+// チェックリストの👤セレクター）でユーザーが明示的に除外したプロフィールは、対応する
+// データが1件も復元されないため、ここでも一覧に追加しない（追加すると中身の無い
+// "ゴースト"プロフィールになってしまうため）。
+function applyProfileMerge(importedData, allowedProfileIds) {
   const { localList, newProfiles, hasImportedRegistry } = previewProfileMerge(importedData);
-  const mergedList = localList.concat(newProfiles);
+  const filteredNewProfiles = allowedProfileIds ? newProfiles.filter(p => allowedProfileIds.has(p.id)) : newProfiles;
+  const mergedList = localList.concat(filteredNewProfiles);
   let count = 0;
   if (hasImportedRegistry) {
     localStorage.setItem(PROFILE_REGISTRY_KEYS[0], JSON.stringify(mergedList));
@@ -1120,7 +1127,7 @@ function applyProfileMerge(importedData) {
     localStorage.setItem(activeKey, importedActive);
     count++;
   }
-  return { count, newProfiles };
+  return { count, newProfiles: filteredNewProfiles };
 }
 // プロフィールの表示名を組み立てる（profiles.js の pfDisplayName() と同じ規則）。
 // id==='default'かつnameが初期値の「メイン」のまま（＝未改名）のプロフィールは、
@@ -2102,7 +2109,12 @@ function computeSiteContentDiff(site, importedData) {
   const totals = { entriesAdded: 0, entriesRemoved: 0, entriesChanged: 0, titlesAdded: 0 };
   importedKeysForSite.forEach(k => {
     const d = diffKeyValues(localStorage.getItem(k), importedData[k]);
-    if (/Titles_v1$/i.test(k)) totals.titlesAdded += d.added;
+    // nsKey()の命名規則（`__p_<profileId>`接尾辞）により、default以外のプロフィールの
+    // キーは生のkそのものに正規表現をかけても一致しない。matchKeysForSite()と同じ
+    // 前方一致ロジックで、この k がどのSITE_CATALOG素キー（rawKey）由来かを突き止め、
+    // そちらに対して称号キー判定を行う。
+    const rawKey = site.keys.find(prefix => k === prefix || (site.namespaced && k.startsWith(prefix + '__p')));
+    if (/Titles_v1$/i.test(rawKey || k)) totals.titlesAdded += d.added;
     else {
       totals.entriesAdded += d.added;
       totals.entriesRemoved += d.removed;
@@ -2306,6 +2318,18 @@ function importCancelOverwriteConfirm() {
 
 function confirmImport() {
   if (!pendingImportData) return;
+  // ⚠️ 上書きリスクは最後にチェックリストを描画した時点でのスナップショットであり、
+  // 同一オリジンを共有する姉妹サイトを別タブで操作した場合など、実際に書き込む直前には
+  // 古くなっている可能性がある。まだ2段階確認（importOverwriteConfirming）を経ていない
+  // 直接実行ルートでは、書き込み前に必ず再計算し、新たにリスクが判明した場合は書き込まず
+  // 確認ステップへ回す。
+  if (!importOverwriteConfirming) {
+    lastImportOverwriteInfo = computeImportOverwriteInfo();
+    if (lastImportOverwriteInfo.hasOverwriteRisk) {
+      importRestoreClicked();
+      return;
+    }
+  }
   const statusEl = document.getElementById('importStatus');
   const dataKeys = Object.keys(pendingImportData);
   const selectedIds = [...document.querySelectorAll('#importSiteArea .import-site-checkbox:checked')].map(el => el.dataset.site);
@@ -2318,22 +2342,46 @@ function confirmImport() {
   }
 
   let count = 0;
-  // 🔀 プロフィール一覧・アクティブポインタは単純上書きせず、既存の登録内容とマージする
-  // （bug #1）。
-  const { count: registryCount, newProfiles } = applyProfileMerge(pendingImportData);
-  count += registryCount;
   // 🆕 サイトごとにプロフィール絞り込み（importProfileFilters）が指定されていれば、
   // そのサイトについては該当プロフィール分のキーだけを復元する。選択中の値がこの
   // コードに実在するプロフィールでない（表示後にコードが読み込み直された等）場合は、
   // データを静かに0件にしてしまわないよう安全側の'all'（従来どおり全プロフィール分）
   // にフォールバックする（generateExportCode()側の同種の安全策と同じ考え方）。
+  // サイトごとの実際の絞り込み値を先に確定させ、プロフィール一覧マージ（下の
+  // applyProfileMerge）とデータ復元の両方でこの同じ値を使う。
   const importedProfilesNow = getImportedProfilesList();
+  const siteValidFilter = {};
+  selectedIds.forEach(id => {
+    const requestedFilter = importProfileFilters[id];
+    siteValidFilter[id] = (requestedFilter && requestedFilter !== 'all' && importedProfilesNow.some(p => p.id === requestedFilter))
+      ? requestedFilter : 'all';
+  });
+  // 🔀 プロフィール一覧・アクティブポインタは単純上書きせず、既存の登録内容とマージする
+  // （bug #1）。ただし、サイトの絞り込みで明示的に除外され、選択中のどのサイトからも
+  // データが1件も復元されないプロフィールは、一覧にも追加しない（追加すると中身の無い
+  // "ゴースト"プロフィールになってしまうため）。hidden:true のサイトは絞り込みUIが無く
+  // 常に全プロフィール分を復元するため、そちらにデータがあるプロフィールは常に許可する。
+  const allowedProfileIds = new Set();
   selectedIds.forEach(id => {
     const site = SITE_CATALOG.find(s => s.id === id);
-    const requestedFilter = importProfileFilters[id];
-    const validFilter = (requestedFilter && requestedFilter !== 'all' && importedProfilesNow.some(p => p.id === requestedFilter))
-      ? requestedFilter : 'all';
-    matchKeysForSiteProfile(site, dataKeys, validFilter).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
+    if (!site || !site.namespaced) return;
+    const filter = siteValidFilter[id];
+    importedProfilesNow.forEach(p => {
+      if ((filter === 'all' || filter === p.id) && matchKeysForSiteProfile(site, dataKeys, p.id).length > 0) {
+        allowedProfileIds.add(p.id);
+      }
+    });
+  });
+  SITE_CATALOG.filter(s => s.hidden && s.namespaced).forEach(site => {
+    importedProfilesNow.forEach(p => {
+      if (matchKeysForSiteProfile(site, dataKeys, p.id).length > 0) allowedProfileIds.add(p.id);
+    });
+  });
+  const { count: registryCount, newProfiles } = applyProfileMerge(pendingImportData, allowedProfileIds);
+  count += registryCount;
+  selectedIds.forEach(id => {
+    const site = SITE_CATALOG.find(s => s.id === id);
+    matchKeysForSiteProfile(site, dataKeys, siteValidFilter[id]).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
   });
   // 🌳 hidden:true のサイトはチェックリストに出ないため選択できないが、コードに含まれて
   // いれば選択の有無に関わらず常に復元する（既存データを静かに落とさないため）。
