@@ -84,12 +84,11 @@
     }
     .nav-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
     .nav-actions { display: flex; align-items: center; gap: 8px; }
-    .sidebar-toggle-btn, .lang-toggle-btn, .settings-toggle-btn {
+    .lang-toggle-btn {
       background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm);
       padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text);
       display: flex; align-items: center; gap: 6px; white-space: nowrap;
     }
-    @media (min-width: 850px) { .sidebar-toggle-btn { visibility: hidden; } }
 
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 499; }
     .sidebar-overlay.show { display: block; }
@@ -511,7 +510,6 @@ const I18N = {
     'tools.dataTransfer': '🔄 データ引継ぎ',
     'tools.taiInfo': '設定・更新情報',
     'tools.profile': '作者プロフィール',
-    'sidebar.hamburgerToggle': '☰ ツール',
     'sidebar.relatedToolsLabel': '関連ツール',
     'dock.ariaLabel': 'クイックメニュー',
     'dock.export': 'エクスポート',
@@ -533,7 +531,6 @@ const I18N = {
     'footer.creditLabel': '作成・ご意見:',
     'footer.requestForm': 'リクエストフォーム',
     'footer.infoLink': '設定・更新情報・クレジット・プライバシーポリシー',
-    'settings.entryBtnTitle': '表示設定',
     'settings.title': '表示設定',
     'settings.displayLabel': '表示',
     'settings.darkModeLabel': 'ダークモード',
@@ -587,6 +584,7 @@ const I18N = {
     'dyn.importOverwriteConfirmBtn': '⚠️ 上書きして復元する',
     'dyn.cancelBtn': '取消',
     'dyn.restoreSuccessNewProfiles': '新しいプロフィールも{n}件追加されました：{names}',
+    'dyn.restoreFailedKeys': ' ⚠️ {n}件は保存に失敗しました（保存容量の上限などが原因の可能性があります）。',
     'dyn.lastExportNever': '💡 まだバックアップがありません。下の「コードを作成」で最初のバックアップを作っておきましょう。',
     'dyn.lastExportToday': '🕒 最終バックアップ：今日',
     'dyn.lastExportYesterday': '🕒 最終バックアップ：1日前',
@@ -627,7 +625,6 @@ const I18N = {
     'tools.dataTransfer': '🔄 Data Transfer',
     'tools.taiInfo': 'Settings & Updates',
     'tools.profile': 'Creator Profile',
-    'sidebar.hamburgerToggle': '☰ Tools',
     'sidebar.relatedToolsLabel': 'Related Tools',
     'dock.ariaLabel': 'Quick Menu',
     'dock.export': 'Export',
@@ -649,7 +646,6 @@ const I18N = {
     'footer.creditLabel': 'Created by / feedback:',
     'footer.requestForm': 'Request form',
     'footer.infoLink': "Settings / What's New / Credits / Privacy Policy",
-    'settings.entryBtnTitle': 'Display Settings',
     'settings.title': 'Display Settings',
     'settings.displayLabel': 'Display',
     'settings.darkModeLabel': 'Dark Mode',
@@ -703,6 +699,7 @@ const I18N = {
     'dyn.importOverwriteConfirmBtn': '⚠️ Overwrite and Restore',
     'dyn.cancelBtn': 'Cancel',
     'dyn.restoreSuccessNewProfiles': vars => ` ${vars.n} new ${vars.n === 1 ? 'profile was' : 'profiles were'} also added: ${vars.names}`,
+    'dyn.restoreFailedKeys': vars => ` ⚠️ ${vars.n} ${vars.n === 1 ? 'key' : 'keys'} failed to save (this may be due to reaching the browser's storage limit).`,
     'dyn.lastExportNever': '💡 No backup yet. Create your first one below with "Create Code".',
     'dyn.lastExportToday': '🕒 Last backup: today',
     'dyn.lastExportYesterday': '🕒 Last backup: 1 day ago',
@@ -1112,9 +1109,10 @@ function applyProfileMerge(importedData, allowedProfileIds) {
   const filteredNewProfiles = allowedProfileIds ? newProfiles.filter(p => allowedProfileIds.has(p.id)) : newProfiles;
   const mergedList = localList.concat(filteredNewProfiles);
   let count = 0;
+  const failedKeys = [];
   if (hasImportedRegistry) {
-    localStorage.setItem(PROFILE_REGISTRY_KEYS[0], JSON.stringify(mergedList));
-    count++;
+    try { localStorage.setItem(PROFILE_REGISTRY_KEYS[0], JSON.stringify(mergedList)); count++; }
+    catch (e) { failedKeys.push(PROFILE_REGISTRY_KEYS[0]); }
   }
   // アクティブなプロフィールのポインタは、この端末で既に選択済みならそれを尊重して
   // 上書きしない（インポートのたびに、勝手にアクティブなプロフィールが切り替わって
@@ -1124,10 +1122,10 @@ function applyProfileMerge(importedData, allowedProfileIds) {
   const activeKey = PROFILE_REGISTRY_KEYS[1];
   const importedActive = importedData ? importedData[activeKey] : undefined;
   if (localStorage.getItem(activeKey) === null && importedActive !== undefined && mergedList.some(p => p && p.id === importedActive)) {
-    localStorage.setItem(activeKey, importedActive);
-    count++;
+    try { localStorage.setItem(activeKey, importedActive); count++; }
+    catch (e) { failedKeys.push(activeKey); }
   }
-  return { count, newProfiles: filteredNewProfiles };
+  return { count, newProfiles: filteredNewProfiles, failedKeys };
 }
 // プロフィールの表示名を組み立てる（profiles.js の pfDisplayName() と同じ規則）。
 // id==='default'かつnameが初期値の「メイン」のまま（＝未改名）のプロフィールは、
@@ -2377,25 +2375,36 @@ function confirmImport() {
       if (matchKeysForSiteProfile(site, dataKeys, p.id).length > 0) allowedProfileIds.add(p.id);
     });
   });
-  const { count: registryCount, newProfiles } = applyProfileMerge(pendingImportData, allowedProfileIds);
+  // 🩹 localStorage.setItem()は保存容量の上限等でthrowすることがある。以前はガード無しの
+  // forEach内で直接呼んでいたため、1件でも失敗すると例外がforEach自体を打ち切り、それ以降の
+  // キー・それ以降のサイト・hiddenSitesの復元まで全て静かに中断されてしまっていた
+  // （tai-itemのインポートで実際にユーザー報告のあった不具合と同じ原因）。1件ずつtry/catchで
+  // 保護し、失敗したキーがあっても残りの復元を継続させる。
+  const failedKeys = [];
+  function safeSetItem(k, v) {
+    try { localStorage.setItem(k, v); count++; }
+    catch (e) { failedKeys.push(k); }
+  }
+  const { count: registryCount, newProfiles, failedKeys: registryFailedKeys } = applyProfileMerge(pendingImportData, allowedProfileIds);
   count += registryCount;
+  failedKeys.push(...registryFailedKeys);
   selectedIds.forEach(id => {
     const site = SITE_CATALOG.find(s => s.id === id);
-    matchKeysForSiteProfile(site, dataKeys, siteValidFilter[id]).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
+    matchKeysForSiteProfile(site, dataKeys, siteValidFilter[id]).forEach(k => safeSetItem(k, pendingImportData[k]));
   });
   // 🌳 hidden:true のサイトはチェックリストに出ないため選択できないが、コードに含まれて
   // いれば選択の有無に関わらず常に復元する（既存データを静かに落とさないため）。
   hiddenSites.forEach(site => {
-    matchKeysForSite(site, dataKeys).forEach(k => { localStorage.setItem(k, pendingImportData[k]); count++; });
+    matchKeysForSite(site, dataKeys).forEach(k => safeSetItem(k, pendingImportData[k]));
   });
   // 🕒 直近の書き出し/読込履歴ログにも1件追加する（非公開サイトは名前を出さず件数のみ記録）。
   const hiddenImportSiteCount = hiddenSites.filter(site => matchKeysForSite(site, dataKeys).length > 0).length;
   recordTransferHistoryEntry('import', selectedIds, hiddenImportSiteCount);
 
-  statusEl.className = 'status-msg ok';
+  statusEl.className = failedKeys.length > 0 ? 'status-msg err' : 'status-msg ok';
   statusEl.textContent = t('dyn.restoreSuccess', { n: count }) + (newProfiles.length > 0
     ? ' ' + t('dyn.restoreSuccessNewProfiles', { n: newProfiles.length, names: newProfiles.map(profileDisplayName).join(LANG === 'en' ? ', ' : '、') })
-    : '');
+    : '') + (failedKeys.length > 0 ? t('dyn.restoreFailedKeys', { n: failedKeys.length }) : '');
   pendingImportData = null;
   pendingImportSiteUpdatedAt = null;
   lastImportDetected = null;
