@@ -350,7 +350,7 @@
     .site-dock .site-dock-icon { font-size: 20px; line-height: 1; }
     .site-dock .site-dock-label { font-size: 10px; font-weight: 700; color: var(--text-2); }
 
-    /* ── モーダル → 流体ボトムシート（モバイル幅） ──
+    /* ── モーダル → 流体ボトムシート ──
        タップでの単純な開閉はCSSトランジションに任せる（コンポジタ駆動で軽い）。
        ドラッグ中・フリック後の物理演算だけJSのanimateTo()が担当し、.js-anim/.is-dragging
        でCSSトランジションを打ち消して競合を避ける。--sheet-progressでスクリムの濃さを連動。 */
@@ -376,17 +376,6 @@
       width: 36px; height: 5px; border-radius: 3px; background: rgba(60, 60, 67, 0.3);
     }
     [data-theme="dark"] .modal-card::before { background: rgba(235, 235, 245, 0.3); }
-    @media (min-width: 850px) {
-      .modal-overlay { align-items: center; padding: 24px; background: rgba(0, 0, 0, 0.45); }
-      .modal-overlay.show { animation: iosFade 0.25s cubic-bezier(0.25, 1, 0.5, 1); }
-      .modal-card {
-        max-width: 440px; border-radius: 18px; max-height: 84vh;
-        touch-action: auto; will-change: auto;
-        animation: iosSheetIn 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-      }
-      .modal-card::before { display: none; }
-    }
-    @keyframes iosSheetIn { from { opacity: 0; transform: scale(0.94) translateY(8px); filter: blur(6px); } to { opacity: 1; transform: none; filter: blur(0); } }
     @keyframes iosFade { from { opacity: 0; } to { opacity: 1; } }
     @keyframes sheetSlideUp { from { transform: translate3d(0, 100%, 0); } to { transform: translate3d(0, 0, 0); } }
 
@@ -2493,7 +2482,6 @@ loadCodeFromUrlFragmentIfPresent(); // 🔗 #code=... 付きのリンクで開�
   var OPEN_CLASS = 'show';
   var OVERLAY_SEL = '.modal-overlay';
   var CARD_SEL = '.modal-card';
-  var MOBILE = window.matchMedia('(max-width: 849px)');
   var REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)');
   var sheets = {};
   var active = null;
@@ -2579,7 +2567,7 @@ loadCodeFromUrlFragmentIfPresent(); // 🔗 #code=... 付きのリンクで開�
     s.y = 0; s.v = 0;
   }
   function onVisibilityChange(overlay, visible) {
-    if (!MOBILE.matches || REDUCE_MOTION.matches) return;
+    if (REDUCE_MOTION.matches) return;
     var s = stateFor(overlay);
     if (!s.card) return;
     if (s.dragging) return;
@@ -2622,7 +2610,7 @@ loadCodeFromUrlFragmentIfPresent(); // 🔗 #code=... 付きのリンクで開�
     return !!(el && el.closest && el.closest('input, select, textarea, button, a, label, [contenteditable], [role="button"], input[type="range"]'));
   }
   document.addEventListener('pointerdown', function (e) {
-    if (!MOBILE.matches || REDUCE_MOTION.matches) return;
+    if (REDUCE_MOTION.matches) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     var card = e.target && e.target.closest ? e.target.closest(CARD_SEL) : null;
     if (!card) return;
@@ -2678,17 +2666,6 @@ loadCodeFromUrlFragmentIfPresent(); // 🔗 #code=... 付きのリンクで開�
   }
   document.addEventListener('pointerup', release);
   document.addEventListener('pointercancel', release);
-
-  function onLayoutChange(e) {
-    if (e.matches) return;
-    active = null;
-    Object.keys(sheets).forEach(function (key) {
-      var s = sheets[key];
-      stopAnim(s); s.dragging = false; if (s.card) { s.card.classList.remove('is-dragging'); } finishHide(s);
-    });
-  }
-  if (MOBILE.addEventListener) MOBILE.addEventListener('change', onLayoutChange);
-  else if (MOBILE.addListener) MOBILE.addListener(onLayoutChange);
 })();
 </script>
 </body>
