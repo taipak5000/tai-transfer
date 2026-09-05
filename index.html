@@ -418,6 +418,9 @@
   <symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4 2.5 5.5.5.7.5 1 .5 1.5h6c0-.5 0-.8.5-1.5C16.5 13 18 11.5 18 9a6 6 0 0 0-6-6Z"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></g></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15Z"/><path d="M12 8.2V12.3l3 1.8"/></g></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><path d="M4 5.5h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/><path d="M9 20.5h6M12 17v3.5"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5Z"/><path d="M6.5 9.5h.01M9.5 9.5h.01M12.5 9.5h.01M15.5 9.5h.01M17.5 9.5h.01M6.5 12.5h.01M9.5 12.5h.01M12.5 12.5h.01M15.5 12.5h.01M17.5 12.5h.01M8 15.5h8"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M4.5 9h15M4.5 15h15"/><path d="M12 4a12 12 0 0 1 0 16"/><path d="M12 4a12 12 0 0 0 0 16"/></g></symbol>
 </defs></svg>
 
 <nav>
@@ -433,7 +436,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-head">
       <div class="sidebar-section-label" data-i18n="sidebar.relatedToolsLabel"></div>
-      <button class="sidebar-close-btn" onclick="toggleSidebar()"><svg class="inline-icon" width="18" height="18"><use href="#i-close"/></svg></button>
+      <button class="sidebar-close-btn" onclick="toggleSidebar()"><span class="icon-chip" style="width:22px; height:22px;"><svg width="16" height="16"><use href="#i-close"/></svg></span></button>
     </div>
     <a href="https://taipak5000.github.io/tai-item/" class="sidebar-nav-link" data-i18n="tools.item"></a>
     <a href="https://taipak5000.github.io/tai-emote/" class="sidebar-nav-link" data-i18n="tools.emote"></a>
@@ -484,11 +487,11 @@
   <div class="modal-card">
     <h3>
       <span data-i18n="settings.title"></span>
-      <button type="button" class="modal-close-x" onclick="settingsClose()" aria-label="Close"><svg class="inline-icon" width="17" height="17"><use href="#i-close"/></svg></button>
+      <button type="button" class="modal-close-x" onclick="settingsClose()" aria-label="Close"><span class="icon-chip" style="width:22px; height:22px;"><svg width="16" height="16"><use href="#i-close"/></svg></span></button>
     </h3>
 
     <div class="settings-section">
-      <p class="settings-section-label" data-i18n="settings.displayLabel"></p>
+      <p class="settings-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-monitor"/></svg> <span data-i18n="settings.displayLabel"></span></p>
       <div class="settings-row">
         <span class="settings-row-text" data-i18n="settings.darkModeLabel"></span>
         <button type="button" class="theme-toggle-btn" id="settingsThemeBtn" onclick="toggleTheme()"></button>
@@ -496,7 +499,7 @@
     </div>
 
     <div class="settings-section">
-      <p class="settings-section-label" data-i18n="settings.shortcutsLabel"></p>
+      <p class="settings-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-keyboard"/></svg> <span data-i18n="settings.shortcutsLabel"></span></p>
       <div class="settings-row">
         <span class="settings-row-text" data-i18n="settings.shortcutsEnableLabel"></span>
         <input type="checkbox" id="shortcutsCheckbox" onchange="onShortcutsCheckboxChange()" style="width:19px; height:19px; flex-shrink:0; cursor:pointer; accent-color:var(--purple);">
@@ -516,7 +519,7 @@
     </div>
 
     <div class="settings-section">
-      <p class="settings-section-label" data-i18n="settings.langLabel"></p>
+      <p class="settings-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-globe"/></svg> <span data-i18n="settings.langLabel"></span></p>
       <div class="lang-select-row">
         <button type="button" class="lang-select-btn" id="settingsLangJaBtn" onclick="setLang('ja')">日本語</button>
         <button type="button" class="lang-select-btn" id="settingsLangEnBtn" onclick="setLang('en')">English</button>
@@ -537,19 +540,19 @@
 <!-- 🧭 site-dock（クイックメニュー）: 既存のハンバーガーサイドバーと並存するショートカット行 -->
 <nav class="site-dock" aria-label="クイックメニュー" data-i18n-aria-label="dock.ariaLabel">
   <button type="button" onclick="scrollToId('exportSection')">
-    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-upload"/></svg></span>
+    <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-upload"/></svg></span></span>
     <span class="site-dock-label" data-i18n="dock.export">エクスポート</span>
   </button>
   <button type="button" onclick="scrollToId('importSection')">
-    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-download"/></svg></span>
+    <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-download"/></svg></span></span>
     <span class="site-dock-label" data-i18n="dock.import">インポート</span>
   </button>
   <button type="button" onclick="toggleSidebar()">
-    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-menu"/></svg></span>
+    <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-menu"/></svg></span></span>
     <span class="site-dock-label" data-i18n="dock.otherTools">他のツール</span>
   </button>
   <button type="button" onclick="settingsOpen()">
-    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-settings"/></svg></span>
+    <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-settings"/></svg></span></span>
     <span class="site-dock-label" data-i18n="dock.settings">表示設定</span>
   </button>
 </nav>
