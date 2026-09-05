@@ -64,6 +64,20 @@
     }
     [data-theme="dark"] nav { background: rgba(0,0,0,0.75); }
 
+    /* 🖼️ 絵文字の代替アイコン一式（線アイコン、24x24、item サイトと同じ Material Design 風）。
+       item/profiles.js の pfInjectIconSprite() と同じ規約を、このサイト用に purple アクセントで移植。 */
+    .inline-icon { stroke: var(--purple); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; color: var(--purple); }
+    .inline-icon.warn { stroke: var(--red); color: var(--red); }
+    .icon-chip {
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: var(--purple-bg);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 60%);
+      border-radius: 26%;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35), inset 0 1px 1px rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.10);
+      color: var(--purple);
+    }
+    .icon-chip svg { display: block; stroke: var(--purple); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     a { text-decoration:none; color:inherit; -webkit-tap-highlight-color:transparent; }
     button { cursor:pointer; border:none; background:none; font-family:inherit; }
@@ -393,8 +407,21 @@
 </head>
 <body>
 
+<svg id="pf-icon-sprite" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs>
+  <symbol id="i-close" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M6 6l12 12M18 6L6 18"/></g></symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 4L3 20h18L12 4Z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></g></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M17 7h-8a4 4 0 0 0-4 4"/><path d="M11 4l-2 3 2 3"/><path d="M7 17h8a4 4 0 0 0 4-4"/><path d="M13 20l2-3-2-3"/></g></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></g></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M4 7h16M4 12h16M4 17h16"/></g></symbol>
+  <symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4 2.5 5.5.5.7.5 1 .5 1.5h6c0-.5 0-.8.5-1.5C16.5 13 18 11.5 18 9a6 6 0 0 0-6-6Z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></g></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15Z"/><path d="M12 8.2V12.3l3 1.8"/></g></symbol>
+</defs></svg>
+
 <nav>
-  <div class="nav-title" data-i18n="tools.dataTransfer"></div>
+  <div class="nav-title"><svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> <span data-i18n="tools.dataTransfer"></span></div>
   <div class="nav-actions">
     <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">EN</button>
   </div>
@@ -406,7 +433,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-head">
       <div class="sidebar-section-label" data-i18n="sidebar.relatedToolsLabel"></div>
-      <button class="sidebar-close-btn" onclick="toggleSidebar()">✕</button>
+      <button class="sidebar-close-btn" onclick="toggleSidebar()"><svg class="inline-icon" width="18" height="18"><use href="#i-close"/></svg></button>
     </div>
     <a href="https://taipak5000.github.io/tai-item/" class="sidebar-nav-link" data-i18n="tools.item"></a>
     <a href="https://taipak5000.github.io/tai-emote/" class="sidebar-nav-link" data-i18n="tools.emote"></a>
@@ -416,7 +443,7 @@
     <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link" data-i18n="tools.companion"></a>
     <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link" data-i18n="tools.wings"></a>
     <a href="https://taipak5000.github.io/tai-score/" class="sidebar-nav-link"><span class="tool-badge-test">test</span><span data-i18n="tools.score">楽譜づくり</span></a>
-    <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool" data-i18n="tools.dataTransfer"></a>
+    <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool"><svg class="inline-icon" width="15" height="15"><use href="#i-sync"/></svg> <span data-i18n="tools.dataTransfer"></span></a>
     <a href="https://taipak5000.github.io/tai-info/" class="sidebar-nav-link" data-i18n="tools.taiInfo"></a>
     <a href="https://taipak5000.github.io/skyzztai-profile/" class="sidebar-nav-link"><span data-i18n="tools.profile">作者プロフィール</span></a>
   </aside>
@@ -457,7 +484,7 @@
   <div class="modal-card">
     <h3>
       <span data-i18n="settings.title"></span>
-      <button type="button" class="modal-close-x" onclick="settingsClose()" aria-label="Close">✕</button>
+      <button type="button" class="modal-close-x" onclick="settingsClose()" aria-label="Close"><svg class="inline-icon" width="17" height="17"><use href="#i-close"/></svg></button>
     </h3>
 
     <div class="settings-section">
@@ -510,19 +537,19 @@
 <!-- 🧭 site-dock（クイックメニュー）: 既存のハンバーガーサイドバーと並存するショートカット行 -->
 <nav class="site-dock" aria-label="クイックメニュー" data-i18n-aria-label="dock.ariaLabel">
   <button type="button" onclick="scrollToId('exportSection')">
-    <span class="site-dock-icon">📤</span>
+    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-upload"/></svg></span>
     <span class="site-dock-label" data-i18n="dock.export">エクスポート</span>
   </button>
   <button type="button" onclick="scrollToId('importSection')">
-    <span class="site-dock-icon">📥</span>
+    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-download"/></svg></span>
     <span class="site-dock-label" data-i18n="dock.import">インポート</span>
   </button>
   <button type="button" onclick="toggleSidebar()">
-    <span class="site-dock-icon">☰</span>
+    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-menu"/></svg></span>
     <span class="site-dock-label" data-i18n="dock.otherTools">他のツール</span>
   </button>
   <button type="button" onclick="settingsOpen()">
-    <span class="site-dock-icon">⚙️</span>
+    <span class="site-dock-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-settings"/></svg></span>
     <span class="site-dock-label" data-i18n="dock.settings">表示設定</span>
   </button>
 </nav>
@@ -547,7 +574,7 @@ const I18N = {
     'tools.companion': '精霊同行ツール',
     'tools.wings': '羽トラッカー',
     'tools.score': '楽譜づくり',
-    'tools.dataTransfer': '🔄 データ引継ぎ',
+    'tools.dataTransfer': 'データ引継ぎ',
     'tools.taiInfo': '設定・更新情報',
     'tools.profile': '作者プロフィール',
     'sidebar.relatedToolsLabel': '関連ツール',
@@ -625,12 +652,12 @@ const I18N = {
     'dyn.cancelBtn': '取消',
     'dyn.restoreSuccessNewProfiles': '新しいプロフィールも{n}件追加されました：{names}',
     'dyn.restoreFailedKeys': ' ⚠️ {n}件は保存に失敗しました（保存容量の上限などが原因の可能性があります）。',
-    'dyn.lastExportNever': '💡 まだバックアップがありません。下の「コードを作成」で最初のバックアップを作っておきましょう。',
-    'dyn.lastExportToday': '🕒 最終バックアップ：今日',
-    'dyn.lastExportYesterday': '🕒 最終バックアップ：1日前',
-    'dyn.lastExportDaysAgo': '🕒 最終バックアップ：{n}日前',
-    'dyn.lastExportStale': '⚠️ 最終バックアップ：{n}日前。そろそろ新しいバックアップを作っておきましょう。',
-    'dyn.lastExportOverdue': '🚨 最終バックアップ：{n}日前。かなり日数が経っています。バックアップをおすすめします。',
+    'dyn.lastExportNever': 'まだバックアップがありません。下の「コードを作成」で最初のバックアップを作っておきましょう。',
+    'dyn.lastExportToday': '最終バックアップ：今日',
+    'dyn.lastExportYesterday': '最終バックアップ：1日前',
+    'dyn.lastExportDaysAgo': '最終バックアップ：{n}日前',
+    'dyn.lastExportStale': '最終バックアップ：{n}日前。そろそろ新しいバックアップを作っておきましょう。',
+    'dyn.lastExportOverdue': '最終バックアップ：{n}日前。かなり日数が経っています。バックアップをおすすめします。',
     'dyn.changedSinceBackupTitle': '前回のバックアップから内容が変わっています',
     'page.allProfilesOption': 'すべてのプロフィール',
     'page.profileFilterAriaLabel': '{site}の引き継ぎプロフィールを絞り込む',
@@ -662,7 +689,7 @@ const I18N = {
     'tools.companion': 'Spirit Companion Tool',
     'tools.wings': 'Wing Tracker',
     'tools.score': 'Sheet Music Maker',
-    'tools.dataTransfer': '🔄 Data Transfer',
+    'tools.dataTransfer': 'Data Transfer',
     'tools.taiInfo': 'Settings & Updates',
     'tools.profile': 'Creator Profile',
     'sidebar.relatedToolsLabel': 'Related Tools',
@@ -740,12 +767,12 @@ const I18N = {
     'dyn.cancelBtn': 'Cancel',
     'dyn.restoreSuccessNewProfiles': vars => ` ${vars.n} new ${vars.n === 1 ? 'profile was' : 'profiles were'} also added: ${vars.names}`,
     'dyn.restoreFailedKeys': vars => ` ⚠️ ${vars.n} ${vars.n === 1 ? 'key' : 'keys'} failed to save (this may be due to reaching the browser's storage limit).`,
-    'dyn.lastExportNever': '💡 No backup yet. Create your first one below with "Create Code".',
-    'dyn.lastExportToday': '🕒 Last backup: today',
-    'dyn.lastExportYesterday': '🕒 Last backup: 1 day ago',
-    'dyn.lastExportDaysAgo': vars => `🕒 Last backup: ${vars.n} days ago`,
-    'dyn.lastExportStale': vars => `⚠️ Last backup: ${vars.n} days ago. Consider creating a new backup soon.`,
-    'dyn.lastExportOverdue': vars => `🚨 Last backup: ${vars.n} days ago. That's quite a while — a backup is recommended.`,
+    'dyn.lastExportNever': 'No backup yet. Create your first one below with "Create Code".',
+    'dyn.lastExportToday': 'Last backup: today',
+    'dyn.lastExportYesterday': 'Last backup: 1 day ago',
+    'dyn.lastExportDaysAgo': vars => `Last backup: ${vars.n} days ago`,
+    'dyn.lastExportStale': vars => `Last backup: ${vars.n} days ago. Consider creating a new backup soon.`,
+    'dyn.lastExportOverdue': vars => `Last backup: ${vars.n} days ago. That's quite a while — a backup is recommended.`,
     'dyn.changedSinceBackupTitle': 'Changed since your last backup',
     'page.allProfilesOption': 'All profiles',
     'page.profileFilterAriaLabel': 'Filter transferred profile for {site}',
@@ -1382,11 +1409,13 @@ function renderLastExportReminder() {
   const state = iso ? lastExportReminderState(iso) : null;
   if (!state) {
     el.className = 'last-export-reminder never';
-    el.textContent = t('dyn.lastExportNever');
+    el.innerHTML = '<svg class="inline-icon" width="14" height="14"><use href="#i-lightbulb"/></svg> ' + t('dyn.lastExportNever');
     return;
   }
   el.className = 'last-export-reminder' + (state.tier === 'ok' ? '' : ' ' + state.tier);
-  el.textContent = state.label;
+  const reminderIcon = state.tier === 'ok' ? 'i-clock' : 'i-warning';
+  const reminderIconClass = state.tier === 'ok' ? 'inline-icon' : 'inline-icon warn';
+  el.innerHTML = `<svg class="${reminderIconClass}" width="14" height="14"><use href="#${reminderIcon}"/></svg> ` + state.label;
 }
 
 /* ================================================================
@@ -1434,7 +1463,7 @@ function renderTransferHistory() {
   if (!transferHistoryOpen || history.length === 0) { areaEl.innerHTML = ''; return; }
 
   areaEl.innerHTML = '<div class="transfer-history-list">' + history.map(entry => {
-    const icon = entry.type === 'export' ? '📤' : '📥';
+    const icon = entry.type === 'export' ? '<svg class="inline-icon" width="14" height="14"><use href="#i-upload"/></svg>' : '<svg class="inline-icon" width="14" height="14"><use href="#i-download"/></svg>';
     const dateLabel = siteUpdatedAtLabel(entry.at);
     const siteNames = (entry.siteIds || []).map(id => {
       const site = SITE_CATALOG.find(s => s.id === id);
@@ -1556,12 +1585,12 @@ function renderExportSiteList() {
         <input type="checkbox" class="site-checkbox" data-site="${site.id}" ${defaultChecked ? 'checked' : ''}>
         <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
         <span class="site-opt-changed-badge ${changedSinceBackup ? 'show' : ''}" role="img"
-          aria-label="${escapeHtml(t('dyn.changedSinceBackupTitle'))}" title="${escapeHtml(t('dyn.changedSinceBackupTitle'))}">🔄</span>
+          aria-label="${escapeHtml(t('dyn.changedSinceBackupTitle'))}" title="${escapeHtml(t('dyn.changedSinceBackupTitle'))}"><svg class="inline-icon" width="13" height="13"><use href="#i-sync"/></svg></span>
         <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}</span>
       </label>`;
     const profileRowHtml = showProfileFilter ? `
       <div class="site-opt-profile-row">
-        <span aria-hidden="true">👤</span>
+        <span aria-hidden="true"><svg class="inline-icon" width="14" height="14"><use href="#i-person"/></svg></span>
         <select class="site-profile-filter" data-site="${site.id}"
           onchange="onExportProfileFilterChange('${site.id}', this.value)"
           aria-label="${escapeHtml(t('page.profileFilterAriaLabel', { site: siteLabel(site) }))}">
@@ -2287,11 +2316,11 @@ function renderImportChecklist() {
         <label class="site-opt ${showProfileFilter ? 'has-profile-filter' : ''}" data-site="${site.id}">
           <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked>
           <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
-          <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}${hasLocalData ? ' ⚠️' : ''}</span>
+          <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}${hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : ''}</span>
         </label>`;
       const profileRowHtml = showProfileFilter ? `
         <div class="site-opt-profile-row">
-          <span aria-hidden="true">👤</span>
+          <span aria-hidden="true"><svg class="inline-icon" width="14" height="14"><use href="#i-person"/></svg></span>
           <select class="site-profile-filter" data-site="${site.id}"
             onchange="onImportProfileFilterChange('${site.id}', this.value)"
             aria-label="${escapeHtml(t('page.profileFilterAriaLabel', { site: siteLabel(site) }))}">
@@ -2318,7 +2347,7 @@ function onImportProfileFilterChange(siteId, value) {
   const countEl = document.querySelector(`#importSiteArea label.site-opt[data-site="${siteId}"] .site-opt-count`);
   if (!countEl) return;
   const hasLocalData = !!(lastImportOverwriteInfo && lastImportOverwriteInfo.visible.some(v => v.site.id === siteId && v.hasLocalData));
-  countEl.textContent = t('dyn.keysCount', { n: filtered.length }) + (hasLocalData ? ' ⚠️' : '');
+  countEl.innerHTML = t('dyn.keysCount', { n: filtered.length }) + (hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : '');
 }
 
 // ⚠️ 上書きが発生する場合は、確認ボタンの1クリックでは即実行せず、詳細説明＋2回目の
@@ -2442,9 +2471,9 @@ function confirmImport() {
   recordTransferHistoryEntry('import', selectedIds, hiddenImportSiteCount);
 
   statusEl.className = failedKeys.length > 0 ? 'status-msg err' : 'status-msg ok';
-  statusEl.textContent = t('dyn.restoreSuccess', { n: count }) + (newProfiles.length > 0
-    ? ' ' + t('dyn.restoreSuccessNewProfiles', { n: newProfiles.length, names: newProfiles.map(profileDisplayName).join(LANG === 'en' ? ', ' : '、') })
-    : '') + (failedKeys.length > 0 ? t('dyn.restoreFailedKeys', { n: failedKeys.length }) : '');
+  statusEl.innerHTML = escapeHtml(t('dyn.restoreSuccess', { n: count })) + (newProfiles.length > 0
+    ? ' ' + escapeHtml(t('dyn.restoreSuccessNewProfiles', { n: newProfiles.length, names: newProfiles.map(p => escapeHtml(profileDisplayName(p))).join(LANG === 'en' ? ', ' : '、') }))
+    : '') + (failedKeys.length > 0 ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' + escapeHtml(t('dyn.restoreFailedKeys', { n: failedKeys.length })) : '');
   pendingImportData = null;
   pendingImportSiteUpdatedAt = null;
   lastImportDetected = null;
