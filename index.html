@@ -2130,8 +2130,10 @@ function diffKeyValues(localRaw, importedRaw) {
 // 触れられず上書きされないため、対象外にする。キー名が"Titles_v1"で終わるもの（SITE_CATALOG
 // の各サイトに共通する、姉妹サイト横断の称号カタログ用キーの命名規則）は、通常の項目とは
 // 別枠で「称号」として集計する。
-function computeSiteContentDiff(site, importedData) {
-  const importedKeysForSite = matchKeysForSite(site, Object.keys(importedData));
+function computeSiteContentDiff(site, importedData, profileFilter) {
+  // 🐛 fix: profileFilterが'all'以外に絞り込まれている場合は、そのプロフィール分の
+  // キーだけを対象に差分を取る（呼び出し元のcomputeImportOverwriteInfo()参照）。
+  const importedKeysForSite = matchKeysForSiteProfile(site, Object.keys(importedData), profileFilter || 'all');
   const totals = { entriesAdded: 0, entriesRemoved: 0, entriesChanged: 0, titlesAdded: 0 };
   importedKeysForSite.forEach(k => {
     const d = diffKeyValues(localStorage.getItem(k), importedData[k]);
@@ -2173,12 +2175,17 @@ function computeImportOverwriteInfo() {
   const currentLocalKeys = getAllLocalStorageKeys();
   const localSnapshots = refreshSiteSnapshots();
   const visible = (lastImportDetected || []).map(site => {
-    const hasLocalData = matchKeysForSite(site, currentLocalKeys).length > 0;
+    // 🐛 fix: サイトごとのプロフィール絞り込み（importProfileFilters）が指定されている場合は
+    // 上書き判定・内容差分もそのプロフィールのキーだけに絞る。以前はサイト全体（全プロフィール分）
+    // のキーで判定していたため、選んだプロフィールとは別のプロフィールのローカルデータの
+    // 有無だけで「上書きされる」と誤判定し、無関係な差分まで表示していた。
+    const profileFilter = (site.namespaced && importProfileFilters[site.id]) || 'all';
+    const hasLocalData = matchKeysForSiteProfile(site, currentLocalKeys, profileFilter).length > 0;
     const localUpdatedAt = (hasLocalData && localSnapshots[site.id]) ? localSnapshots[site.id].updatedAt : null;
     const importUpdatedAt = (pendingImportSiteUpdatedAt && pendingImportSiteUpdatedAt[site.id]) || null;
     // 📊 上書きが起きるサイトについてのみ、内容差分を計算する（新規追加のみのサイトには
     // 「上書きで何が変わるか」という問い自体が発生しないため）。
-    const contentDiff = hasLocalData ? computeSiteContentDiff(site, pendingImportData || {}) : null;
+    const contentDiff = hasLocalData ? computeSiteContentDiff(site, pendingImportData || {}, profileFilter) : null;
     return { site, hasLocalData, localUpdatedAt, importUpdatedAt, contentDiff };
   });
   const hiddenOverwriteCount = SITE_CATALOG
@@ -2317,11 +2324,18 @@ function onImportProfileFilterChange(siteId, value) {
   importProfileFilters[siteId] = value;
   const site = SITE_CATALOG.find(s => s.id === siteId);
   if (!site || !lastImportDataKeys) return;
+  // 🐛 fix: プロフィール絞り込みを変えたら、上書き判定・内容差分もこの新しい絞り込みで
+  // 再計算する（computeImportOverwriteInfo()はimportProfileFiltersを見るようになったが、
+  // ここで再計算しないと警告ボックス・2段階確認の要否がこの変更前の絞り込みのまま
+  // 古くなってしまう）。
+  if (lastImportOverwriteInfo) lastImportOverwriteInfo = computeImportOverwriteInfo();
   const filtered = matchKeysForSiteProfile(site, lastImportDataKeys, value);
   const countEl = document.querySelector(`#importSiteArea label.site-opt[data-site="${siteId}"] .site-opt-count`);
-  if (!countEl) return;
-  const hasLocalData = !!(lastImportOverwriteInfo && lastImportOverwriteInfo.visible.some(v => v.site.id === siteId && v.hasLocalData));
-  countEl.innerHTML = t('dyn.keysCount', { n: filtered.length }) + (hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : '');
+  if (countEl) {
+    const hasLocalData = !!(lastImportOverwriteInfo && lastImportOverwriteInfo.visible.some(v => v.site.id === siteId && v.hasLocalData));
+    countEl.innerHTML = t('dyn.keysCount', { n: filtered.length }) + (hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : '');
+  }
+  renderImportConfirmArea();
 }
 
 // ⚠️ 上書きが発生する場合は、確認ボタンの1クリックでは即実行せず、詳細説明＋2回目の
