@@ -1180,13 +1180,19 @@ function applyProfileMerge(importedData, allowedProfileIds) {
   return { count, newProfiles: filteredNewProfiles, failedKeys };
 }
 // プロフィールの表示名を組み立てる（profiles.js の pfDisplayName() と同じ規則）。
-// id==='default'かつnameが初期値の「メイン」のまま（＝未改名）のプロフィールは、
-// 現在の言語で改めて翻訳する（profiles.js側は `p.id === DEFAULT_PROFILE_ID && p.name === 'メイン'`
-// で判定しており、実データに存在しない`isDefaultName`フィールドを見ていたため常にfalseに
-// なってしまっていた。ユーザーが改名した場合はそのままp.nameを表示する）。
+// 実データでは未改名の「メイン」プロフィールは name:''・isDefaultName:true で保存される
+// （profiles.js の ensureProfilesInit()/loadProfiles() 参照）。以前は p.name==='メイン' を
+// 直接見ていたため常にfalseになり、name===''が (p.name)||(p.id) で 'default' まで
+// フォールバックしてしまっていた。isDefaultName導入前の旧データ（フラグ自体が無い）にも
+// 対応できるよう、フラグ未設定時のみloadProfiles()と同じ判定で補う。ユーザーが明示的に
+// 改名した場合はisDefaultNameがfalseになるため、そのままp.nameを表示する。
 function profileDisplayName(p) {
-  if (p && p.id === 'default' && p.name === 'メイン') return LANG === 'en' ? 'Main' : 'メイン';
-  return (p && p.name) || (p && p.id) || '';
+  if (!p) return '';
+  const isDefaultName = p.isDefaultName === undefined
+    ? (p.id === 'default' && (p.name === 'メイン' || p.name === 'Main'))
+    : p.isDefaultName;
+  if (isDefaultName) return LANG === 'en' ? 'Main' : 'メイン';
+  return p.name || p.id || '';
 }
 
 function getAllLocalStorageKeys() {
@@ -1960,7 +1966,8 @@ let pendingImportData = null;
 let pendingImportSiteUpdatedAt = null; // { siteId: ISO日時, ... }（インポート元が生成した「サイト別最終更新」。導入前の古いコードには無い）
 let lastImportDetected = null; // array of matched SITE_CATALOG entries
 let lastImportDataKeys = null;
-let lastImportOverwriteInfo = null; // { visible, hiddenOverwriteCount, newProfiles, hasOverwriteRisk }（renderImportChecklist()で算出）
+let lastImportOverwriteInfo = null; // { visible, hiddenOverwriteCount, newProfiles }（renderImportChecklist()で算出。上書きリスクの有無はここに焼き込まず、
+                                     // 呼び出し側がその時点でチェックされているサイトIDと突き合わせてcomputeSelectedOverwriteRisk()で判定する）
 let importOverwriteConfirming = false; // ⚠️ 上書きが発生する復元の2段階確認state
 // 🆕 サイト単位ではなくプロフィール単位での引き継ぎ絞り込み（インポート側）：エクスポート側の
 // exportProfileFiltersと同じ形（サイトid→'all'または特定のプロフィールid）。新しいコードを
@@ -2179,12 +2186,20 @@ function computeImportOverwriteInfo() {
     .filter(site => matchKeysForSite(site, currentLocalKeys).length > 0)
     .length;
   const { newProfiles } = previewProfileMerge(pendingImportData || {});
-  return {
-    visible,
-    hiddenOverwriteCount,
-    newProfiles,
-    hasOverwriteRisk: visible.some(v => v.hasLocalData) || hiddenOverwriteCount > 0
-  };
+  return { visible, hiddenOverwriteCount, newProfiles };
+}
+
+// 🆕 現在チェックされている（=実際に復元対象となる）サイトIDだけを対象に、上書きが本当に
+// 発生するかを判定する。hidden:true のサイトはチェックボックス自体が無く選択に関わらず常に
+// 復元されるため（confirmImport()参照）、hiddenOverwriteCountは選択状態を問わず加味する。
+function computeSelectedOverwriteRisk(info, selectedIds) {
+  if (!info) return false;
+  return info.visible.some(v => selectedIds.includes(v.site.id) && v.hasLocalData) || info.hiddenOverwriteCount > 0;
+}
+
+// importSiteArea内でチェック中のサイトID一覧を読み取る（confirmImport()と表示側で共用）。
+function getCheckedImportSiteIds() {
+  return [...document.querySelectorAll('#importSiteArea .import-site-checkbox:checked')].map(el => el.dataset.site);
 }
 
 // ⚠️ 上書き・新規プロフィール追加の内訳ボックス。警告すべき内容が無ければ空文字を返す。
@@ -2254,8 +2269,8 @@ function renderImportChecklist() {
   siteAreaEl.innerHTML = warningHtml +
     `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
     `<div class="list-select-row">
-      <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', true)">${t('page.selectAllBtn')}</button>
-      <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', false)">${t('page.selectNoneBtn')}</button>
+      <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', true); renderImportConfirmArea();">${t('page.selectAllBtn')}</button>
+      <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', false); renderImportConfirmArea();">${t('page.selectNoneBtn')}</button>
     </div>` +
     lastImportOverwriteInfo.visible.map(({ site, hasLocalData }) => {
       const matched = matchKeysForSite(site, lastImportDataKeys);
@@ -2266,7 +2281,7 @@ function renderImportChecklist() {
       const filteredMatched = filterVal === 'all' ? matched : matchKeysForSiteProfile(site, lastImportDataKeys, filterVal);
       const rowHtml = `
         <label class="site-opt ${showProfileFilter ? 'has-profile-filter' : ''}" data-site="${site.id}">
-          <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked>
+          <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked onchange="renderImportConfirmArea()">
           <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
           <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}${hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : ''}</span>
         </label>`;
@@ -2305,9 +2320,12 @@ function onImportProfileFilterChange(siteId, value) {
 // ⚠️ 上書きが発生する場合は、確認ボタンの1クリックでは即実行せず、詳細説明＋2回目の
 // 明示クリックを要求する2段階確認にする（item/profiles.jsのdmStartWipe/dmConfirmWipe
 // と同じ既存パターンに倣う）。上書きが無い（純粋な新規追加のみの）場合は、従来どおり
-// 1クリックでそのまま復元する。
+// 1クリックでそのまま復元する。「上書きが発生するか」は今チェックされているサイトだけを
+// 見て判定する（チェックを外して上書き対象を全て除外すれば、1クリック復元に戻る）。
 // チェックボックスの状態を保持するため、この確認state変更ではimportSiteAreaを
 // 再描画しない（renderImportChecklist()は呼ばず、confirmAreaElのみ更新する）。
+// この関数はチェックボックスのonchangeからも呼ばれ、選択変更のたびにhasRiskを
+// 再評価してボタンのonclick先を最新の状態に保つ。
 function renderImportConfirmArea() {
   const confirmAreaEl = document.getElementById('importConfirmArea');
   if (!lastImportDetected || !lastImportDataKeys) {
@@ -2323,7 +2341,7 @@ function renderImportConfirmArea() {
       </div>`;
     return;
   }
-  const hasRisk = !!(lastImportOverwriteInfo && lastImportOverwriteInfo.hasOverwriteRisk);
+  const hasRisk = computeSelectedOverwriteRisk(lastImportOverwriteInfo, getCheckedImportSiteIds());
   confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="${hasRisk ? 'importRestoreClicked()' : 'confirmImport()'}">${t('dyn.restoreBtn')}</button>`;
 }
 function importRestoreClicked() {
@@ -2337,21 +2355,21 @@ function importCancelOverwriteConfirm() {
 
 function confirmImport() {
   if (!pendingImportData) return;
+  const selectedIds = getCheckedImportSiteIds();
   // ⚠️ 上書きリスクは最後にチェックリストを描画した時点でのスナップショットであり、
   // 同一オリジンを共有する姉妹サイトを別タブで操作した場合など、実際に書き込む直前には
   // 古くなっている可能性がある。まだ2段階確認（importOverwriteConfirming）を経ていない
-  // 直接実行ルートでは、書き込み前に必ず再計算し、新たにリスクが判明した場合は書き込まず
-  // 確認ステップへ回す。
+  // 直接実行ルートでは、書き込み前に必ず再計算し、今チェックされている選択（selectedIds）
+  // に対して新たにリスクが判明した場合は書き込まず確認ステップへ回す。
   if (!importOverwriteConfirming) {
     lastImportOverwriteInfo = computeImportOverwriteInfo();
-    if (lastImportOverwriteInfo.hasOverwriteRisk) {
+    if (computeSelectedOverwriteRisk(lastImportOverwriteInfo, selectedIds)) {
       importRestoreClicked();
       return;
     }
   }
   const statusEl = document.getElementById('importStatus');
   const dataKeys = Object.keys(pendingImportData);
-  const selectedIds = [...document.querySelectorAll('#importSiteArea .import-site-checkbox:checked')].map(el => el.dataset.site);
   const hiddenSites = SITE_CATALOG.filter(s => s.hidden);
   const hasHiddenData = hiddenSites.some(site => matchKeysForSite(site, dataKeys).length > 0);
   if (selectedIds.length === 0 && !hasHiddenData) {
