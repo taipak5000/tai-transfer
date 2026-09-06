@@ -2466,7 +2466,7 @@ function confirmImport() {
 
   statusEl.className = failedKeys.length > 0 ? 'status-msg err' : 'status-msg ok';
   statusEl.innerHTML = escapeHtml(t('dyn.restoreSuccess', { n: count })) + (newProfiles.length > 0
-    ? ' ' + escapeHtml(t('dyn.restoreSuccessNewProfiles', { n: newProfiles.length, names: newProfiles.map(p => escapeHtml(profileDisplayName(p))).join(LANG === 'en' ? ', ' : '、') }))
+    ? ' ' + t('dyn.restoreSuccessNewProfiles', { n: newProfiles.length, names: newProfiles.map(p => escapeHtml(profileDisplayName(p))).join(LANG === 'en' ? ', ' : '、') })
     : '') + (failedKeys.length > 0 ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' + escapeHtml(t('dyn.restoreFailedKeys', { n: failedKeys.length })) : '');
   pendingImportData = null;
   pendingImportSiteUpdatedAt = null;
