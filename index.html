@@ -147,8 +147,13 @@
     }
     .site-opt:last-of-type { border-bottom: none; }
     .site-opt input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--purple); }
-    .site-opt-label { flex: 1; font-size: 14px; color: var(--text); }
-    .site-opt-count { font-size: 12px; color: var(--text-2); }
+    .site-opt-label { flex: 1; font-size: 14px; color: var(--text); line-height: 1.5; }
+    /* 🔢 数字と単位のコントラスト：数字部分(.num-strong)を太く大きく、単位(.num-unit)は
+       控えめにする（numUnitHtml()参照。文言そのものは変えず表示側だけで分割する）。
+       tabular-numsは今表示されている件数バッジの右端が行ごとに綺麗に揃うようにするため。 */
+    .site-opt-count { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .site-opt-count .num-strong { font-size: 13px; font-weight: 700; color: var(--text); }
+    .site-opt-count .num-unit { font-size: 11px; color: var(--text-2); }
     /* ♿ データが無いサイトの行は、以前は行全体をopacity:0.45で薄くしていたが、
        ライト/ダーク両テーマでWCAG AAのコントラスト比(通常文字4.5:1)を割り込んでいた
        （チェックボックス自体はdisabledにしておらず、視覚的に薄いだけの表現のため）。
@@ -228,7 +233,7 @@
     .site-updated-list { margin-top: 8px; }
     .site-updated-row {
       display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-      font-size: 12px; color: var(--text-2); padding: 3px 0;
+      font-size: 12px; color: var(--text-2); padding: 3px 0; line-height: 1.5;
     }
     .site-updated-row .site-updated-name { flex: 1; min-width: 0; }
     .site-updated-row .site-updated-date { flex-shrink: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -267,8 +272,11 @@
     }
     .qr-box svg { display: block; width: 200px; height: 200px; max-width: 100%; }
 
-    footer { text-align: center; font-size: 11.5px; color: var(--text-3); padding: 34px 16px 12px; line-height: 1.9; }
-    footer a { color: var(--purple-d); text-decoration: none; }
+    /* 📝 長文（免責事項・クレジット行）は中央揃えではなく左揃えにする。ここは1〜2文の
+       段落テキストであり、短い単発ラベルではないため。 */
+    footer { text-align: left; font-size: 11.5px; color: var(--text-3); padding: 34px 16px 12px; line-height: 1.9; }
+    /* 🔗 文中リンクは下線で示す（hoverのみの下線では不十分なため常時下線）。 */
+    footer a { color: var(--purple-d); text-decoration: underline; }
 
     /* ⚙️ 表示設定モーダル（ダークモード切替・キーボードショートカット設定） */
     .modal-overlay {
@@ -294,7 +302,7 @@
     }
     .settings-row {
       display: flex; align-items: center; gap: 8px; padding: 9px 11px; background: var(--bg);
-      border-radius: var(--r-sm); margin-bottom: 6px; font-size: 13.5px; color: var(--text);
+      border-radius: var(--r-sm); margin-bottom: 6px; font-size: 13.5px; color: var(--text); line-height: 1.4;
     }
     .settings-row:last-child { margin-bottom: 0; }
     .settings-row-text { flex: 1; min-width: 0; }
@@ -1508,6 +1516,18 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// 🔢 数字と単位のコントラスト：t('dyn.keysCount', {n})が返す「42件」「42 keys」のような
+// 文言（文言そのものは変更しない）を、表示直前にDOM側だけで先頭の数字部分と続く単位部分に
+// 分割し、それぞれ.num-strong（太く大きく）/.num-unit（小さく控えめ）でラップする。
+// 正規表現に一致しない（数字で始まらない）文字列が来た場合は、安全側でそのままエスケープ
+// して返す（分割せず通常表示に留める）。
+function numUnitHtml(str) {
+  const s = String(str);
+  const m = s.match(/^(-?[\d,]+(?:\.\d+)?)(.*)$/s);
+  if (!m) return escapeHtml(s);
+  return `<span class="num-strong">${escapeHtml(m[1])}</span><span class="num-unit">${escapeHtml(m[2])}</span>`;
+}
+
 /* ================================================================
    📤 エクスポート（サイト選択 → コード作成）
    ================================================================ */
@@ -1545,7 +1565,7 @@ function renderExportSiteList() {
         <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
         <span class="site-opt-changed-badge ${changedSinceBackup ? 'show' : ''}" role="img"
           aria-label="${escapeHtml(t('dyn.changedSinceBackupTitle'))}" title="${escapeHtml(t('dyn.changedSinceBackupTitle'))}"><svg class="inline-icon" width="13" height="13"><use href="#i-sync"/></svg></span>
-        <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}</span>
+        <span class="site-opt-count">${numUnitHtml(t('dyn.keysCount', { n: filteredMatched.length }))}</span>
       </label>`;
     const profileRowHtml = showProfileFilter ? `
       <div class="site-opt-profile-row">
@@ -1575,7 +1595,7 @@ function onExportProfileFilterChange(siteId, value) {
   const allKeys = getAllLocalStorageKeys();
   const filtered = matchKeysForSiteProfile(site, allKeys, value);
   const countEl = document.querySelector(`#exportSiteList label.site-opt[data-site="${siteId}"] .site-opt-count`);
-  if (countEl) countEl.textContent = t('dyn.keysCount', { n: filtered.length });
+  if (countEl) countEl.innerHTML = numUnitHtml(t('dyn.keysCount', { n: filtered.length }));
 }
 
 // 🆕 前回バックアップからの変更目印を、チェックボックスの選択状態を保ったまま
@@ -2297,7 +2317,7 @@ function renderImportChecklist() {
         <label class="site-opt ${showProfileFilter ? 'has-profile-filter' : ''}" data-site="${site.id}">
           <input type="checkbox" class="import-site-checkbox" data-site="${site.id}" checked onchange="renderImportConfirmArea()">
           <span class="site-opt-label">${escapeHtml(siteLabel(site))}</span>
-          <span class="site-opt-count">${t('dyn.keysCount', { n: filteredMatched.length })}${hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : ''}</span>
+          <span class="site-opt-count">${numUnitHtml(t('dyn.keysCount', { n: filteredMatched.length }))}${hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : ''}</span>
         </label>`;
       const profileRowHtml = showProfileFilter ? `
         <div class="site-opt-profile-row">
@@ -2333,7 +2353,7 @@ function onImportProfileFilterChange(siteId, value) {
   const countEl = document.querySelector(`#importSiteArea label.site-opt[data-site="${siteId}"] .site-opt-count`);
   if (countEl) {
     const hasLocalData = !!(lastImportOverwriteInfo && lastImportOverwriteInfo.visible.some(v => v.site.id === siteId && v.hasLocalData));
-    countEl.innerHTML = t('dyn.keysCount', { n: filtered.length }) + (hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : '');
+    countEl.innerHTML = numUnitHtml(t('dyn.keysCount', { n: filtered.length })) + (hasLocalData ? ' <svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg>' : '');
   }
   renderImportConfirmArea();
 }
