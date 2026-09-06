@@ -177,8 +177,8 @@
        以降にそのサイトのデータが変化したことを示す目印。常にDOM上には置いておき
        (.show の有無だけを切り替える) ことで、コード作成直後にチェックボックスの選択
        状態を巻き戻さずこの目印だけを更新できるようにする（updateExportChangedBadges()
-       参照）。一度もバックアップしていない場合は.last-export-reminder.never側で
-       案内済みのため、この目印自体を出さない（renderExportSiteList()側の条件）。 */
+       参照）。一度もバックアップしていない場合は「何と比べて変更されたか」が定まらない
+       ため、この目印自体を出さない（renderExportSiteList()側の条件）。 */
     .site-opt-changed-badge { display: none; flex-shrink: 0; font-size: 13px; line-height: 1; }
     .site-opt-changed-badge.show { display: inline; }
 
@@ -212,23 +212,7 @@
     .status-msg.ok { color: var(--green); }
     .status-msg.err { color: var(--red); }
 
-    /* 🕒 エクスポートカード上部の「最終バックアップ」リマインダー。エクスポートを
-       実行しなくても常時見える、持続的なステータス行（.hintの直後・操作ボタンより
-       前に置き、バックアップ状況を選択リストより先に目に入るようにする）。
-       一度もバックアップが無い場合(.never)は警告色ではなく--purpleで「まだ危険」
-       ではなく「やってみよう」という前向きなトーンにする。
-       🆕 経過日数に応じて警告を段階的に強化する3段階目盛り：
-       ok(既定・~6日)は上のトーンのまま／.stale(7〜29日)は.neverと同じ前向きな
-       --purpleトーンで「そろそろ」を促す／.overdue(30日〜)のみ--redの警告色にする。 */
-    .last-export-reminder {
-      display: flex; align-items: center; gap: 7px;
-      background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm);
-      padding: 8px 12px; margin-bottom: 14px; font-size: 12.5px; color: var(--text-2); line-height: 1.6;
-    }
-    .last-export-reminder.never, .last-export-reminder.stale { border-color: var(--purple); color: var(--purple-d); }
-    .last-export-reminder.overdue { border-color: var(--red); color: var(--red); }
-
-    /* 🕒 直近の書き出し/読込履歴ログ（last-export-reminderの下に配置。既定は折りたたみで、
+    /* 🕒 直近の書き出し/読込履歴ログ（.hintの下に配置。既定は折りたたみで、
        トグルボタンは既存の.list-select-btn（ピル型の小さいテキストボタン）をそのまま流用する） */
     .transfer-history-list { margin-bottom: 10px; }
     .transfer-history-row {
@@ -467,7 +451,6 @@
     <p class="sec-label" id="exportSection" data-i18n="page.sectionExport"></p>
     <div class="card">
       <div class="hint" data-i18n="page.exportHint"></div>
-      <div id="lastExportReminder" class="last-export-reminder"></div>
       <button type="button" class="list-select-btn" id="transferHistoryToggleBtn" onclick="toggleTransferHistory()" style="display:none; margin-bottom:10px;"></button>
       <div id="transferHistoryArea"></div>
       <div class="list-select-row">
@@ -667,12 +650,6 @@ const I18N = {
     'dyn.cancelBtn': '取消',
     'dyn.restoreSuccessNewProfiles': '新しいプロフィールも{n}件追加されました：{names}',
     'dyn.restoreFailedKeys': ' ⚠️ {n}件は保存に失敗しました（保存容量の上限などが原因の可能性があります）。',
-    'dyn.lastExportNever': 'まだバックアップがありません。下の「コードを作成」で最初のバックアップを作っておきましょう。',
-    'dyn.lastExportToday': '最終バックアップ：今日',
-    'dyn.lastExportYesterday': '最終バックアップ：1日前',
-    'dyn.lastExportDaysAgo': '最終バックアップ：{n}日前',
-    'dyn.lastExportStale': '最終バックアップ：{n}日前。そろそろ新しいバックアップを作っておきましょう。',
-    'dyn.lastExportOverdue': '最終バックアップ：{n}日前。かなり日数が経っています。バックアップをおすすめします。',
     'dyn.changedSinceBackupTitle': '前回のバックアップから内容が変わっています',
     'page.allProfilesOption': 'すべてのプロフィール',
     'page.profileFilterAriaLabel': '{site}の引き継ぎプロフィールを絞り込む',
@@ -782,12 +759,6 @@ const I18N = {
     'dyn.cancelBtn': 'Cancel',
     'dyn.restoreSuccessNewProfiles': vars => ` ${vars.n} new ${vars.n === 1 ? 'profile was' : 'profiles were'} also added: ${vars.names}`,
     'dyn.restoreFailedKeys': vars => ` ⚠️ ${vars.n} ${vars.n === 1 ? 'key' : 'keys'} failed to save (this may be due to reaching the browser's storage limit).`,
-    'dyn.lastExportNever': 'No backup yet. Create your first one below with "Create Code".',
-    'dyn.lastExportToday': 'Last backup: today',
-    'dyn.lastExportYesterday': 'Last backup: 1 day ago',
-    'dyn.lastExportDaysAgo': vars => `Last backup: ${vars.n} days ago`,
-    'dyn.lastExportStale': vars => `Last backup: ${vars.n} days ago. Consider creating a new backup soon.`,
-    'dyn.lastExportOverdue': vars => `Last backup: ${vars.n} days ago. That's quite a while — a backup is recommended.`,
     'dyn.changedSinceBackupTitle': 'Changed since your last backup',
     'page.allProfilesOption': 'All profiles',
     'page.profileFilterAriaLabel': 'Filter transferred profile for {site}',
@@ -860,7 +831,6 @@ function setLang(lang) {
   renderExportSiteList();
   renderExportOutput();
   renderImportSiteArea();
-  renderLastExportReminder(); // 「最終バックアップ」リマインダーの文言も、言語切替時に更新する
   renderTransferHistory(); // 書き出し/読込履歴ログの文言・サイト名・日時表記も、言語切替時に更新する
   syncSettingsLangButtons();
 }
@@ -1367,12 +1337,14 @@ function siteUpdatedAtLabel(iso) {
 }
 
 /* ================================================================
-   🕒 「最終バックアップ」リマインダー
+   🕒 「最終バックアップ」日時の記録
    エクスポート（引き継ぎコード作成）が成功するたびに、その日時をこの端末だけの
-   記録として保存する。上のサイト別スナップショットと違い引き継ぎの対象キーでは
-   ないため、他サイトのキーと衝突しない専用プレフィックス（dataTransfer…）を使い、
-   SITE_CATALOGのどのsite.keysにもマッチしないことでエクスポート内容から自動的に
-   除外される（= この記録自体が引き継がれることはない。端末ごとの実績として扱う）。
+   記録として保存する。前回バックアップからの変更目印（.site-opt-changed-badge）や
+   書き出し/読込履歴ログの基準時刻として使う。上のサイト別スナップショットと違い
+   引き継ぎの対象キーではないため、他サイトのキーと衝突しない専用プレフィックス
+   （dataTransfer…）を使い、SITE_CATALOGのどのsite.keysにもマッチしないことで
+   エクスポート内容から自動的に除外される（= この記録自体が引き継がれることは
+   ない。端末ごとの実績として扱う）。
    ================================================================ */
 const LAST_EXPORT_KEY = 'dataTransferLastExportAt_v1'; // このツール自身の内部管理用キー（引き継ぎの対象キーには含めない）
 
@@ -1399,43 +1371,9 @@ function saveLastExportSelection(selectedIds) {
   try { localStorage.setItem(LAST_EXPORT_SELECTION_KEY, JSON.stringify(selectedIds)); } catch (e) { /* 保存領域上限等は無視してエクスポート自体は継続する */ }
 }
 
-// 「今日」「1日前」「N日前」の判定は、経過ミリ秒ではなくローカルの暦日の差分で行う
-// （例：昨日23:58にバックアップし今日0:02に開いた場合、経過時間は4分でも「1日前」と
-// 表示する方が直感に合うため）。
-// 🆕 バックアップ未実施の警告を段階的に強化：経過日数が伸びるほど、文言・トーンの
-// 両方を3段階（ok→stale→overdue）で強めていく。しきい値は他ツールの通知間隔等を
-// 踏まえたおおよその目安（7日＝約1週間放置／30日＝約1ヶ月放置）。
-function lastExportReminderState(iso) {
-  const then = new Date(iso);
-  if (isNaN(then.getTime())) return null;
-  const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(then)) / 86400000);
-  if (diffDays <= 0) return { tier: 'ok', label: t('dyn.lastExportToday') };
-  if (diffDays === 1) return { tier: 'ok', label: t('dyn.lastExportYesterday') };
-  if (diffDays >= 30) return { tier: 'overdue', label: t('dyn.lastExportOverdue', { n: diffDays }) };
-  if (diffDays >= 7) return { tier: 'stale', label: t('dyn.lastExportStale', { n: diffDays }) };
-  return { tier: 'ok', label: t('dyn.lastExportDaysAgo', { n: diffDays }) };
-}
-
-function renderLastExportReminder() {
-  const el = document.getElementById('lastExportReminder');
-  if (!el) return;
-  const iso = getLastExportAt();
-  const state = iso ? lastExportReminderState(iso) : null;
-  if (!state) {
-    el.className = 'last-export-reminder never';
-    el.innerHTML = '<svg class="inline-icon" width="14" height="14"><use href="#i-lightbulb"/></svg> ' + t('dyn.lastExportNever');
-    return;
-  }
-  el.className = 'last-export-reminder' + (state.tier === 'ok' ? '' : ' ' + state.tier);
-  const reminderIcon = state.tier === 'ok' ? 'i-clock' : 'i-warning';
-  const reminderIconClass = state.tier === 'ok' ? 'inline-icon' : 'inline-icon warn';
-  el.innerHTML = `<svg class="${reminderIconClass}" width="14" height="14"><use href="#${reminderIcon}"/></svg> ` + state.label;
-}
-
 /* ================================================================
    🕒 直近の書き出し/読込履歴ログ
-   上の「最終バックアップ」リマインダー（日時1件のみ）を土台に、直近5件分の
+   上の「最終バックアップ」日時の記録（日時1件のみ）を土台に、直近5件分の
    書き出し/読込イベントを、それぞれの対象サイト一覧つきで記録する。このツール
    自身の内部管理用キー（SITE_SNAPSHOT_KEY・LAST_EXPORT_KEYと同じ理由で引き継ぎの
    対象キーには含めない＝SITE_CATALOGのどのsite.keysにもマッチしない専用
@@ -1580,8 +1518,8 @@ function renderExportSiteList() {
   // 記録が無い（初回・localStorage不可時）場合は、従来どおり「データがあるサイトを
   // 既定でチェック」にフォールバックする。
   const savedSelection = getLastExportSelection();
-  // 🆕 前回バックアップからの変更目印：バックアップが一度もない場合は最上部の
-  // .last-export-reminder.neverで既に案内済みのため、ここでは出さない。
+  // 🆕 前回バックアップからの変更目印：バックアップが一度もない場合は「何と比べて
+  // 変更されたか」が定まらないため、lastExportAtがfalsyなら常に非表示になる。
   const lastExportAt = getLastExportAt();
   const snapshots = refreshSiteSnapshots();
   const el = document.getElementById('exportSiteList');
@@ -1747,7 +1685,6 @@ async function generateExportCode() {
   // （ダウンロード/コピー/QR表示はコードを取り出す手段の違いに過ぎず、バックアップ
   // そのものはここで完了している）。
   recordLastExportAt();
-  renderLastExportReminder();
   // 🕒 直近の書き出し/読込履歴ログにも同じタイミングで1件追加する（非公開サイトは
   // 既存の.overwriteHiddenNote等と同じく、名前は出さず件数のみを記録する）。
   recordTransferHistoryEntry('export', selectedIds, hiddenExportSites.length);
@@ -2512,7 +2449,6 @@ applyI18n();
 applyThemeToDOM();
 refreshSiteSnapshots(); // 🕒 このツールの「最終更新」把握を、今この端末にある最新の中身に合わせて更新する
 renderExportSiteList();
-renderLastExportReminder(); // 🕒 「最終バックアップ」リマインダーを初期表示する
 renderTransferHistory(); // 🕒 書き出し/読込履歴ログを初期表示する
 loadCodeFromUrlFragmentIfPresent(); // 🔗 #code=... 付きのリンクで開かれた場合、コードを自動で読み込む
 </script>
