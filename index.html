@@ -2203,9 +2203,13 @@ function getCheckedImportSiteIds() {
 }
 
 // ⚠️ 上書き・新規プロフィール追加の内訳ボックス。警告すべき内容が無ければ空文字を返す。
-function renderImportWarningBoxHtml(info) {
+// selectedIdsを渡すと、実際に今チェックされているサイトだけに絞って一覧表示する
+// （チェックを外したサイトは「上書きされる」一覧から除く。hiddenOverwriteCountは
+// チェックボックス自体が無いサイトの件数なので、selectedIdsの影響を受けない）。
+function renderImportWarningBoxHtml(info, selectedIds) {
   if (!info) return '';
-  const overwriteRows = info.visible.filter(v => v.hasLocalData).map(({ site, localUpdatedAt, importUpdatedAt, contentDiff }) => {
+  const ids = selectedIds || [];
+  const overwriteRows = info.visible.filter(v => v.hasLocalData && ids.includes(v.site.id)).map(({ site, localUpdatedAt, importUpdatedAt, contentDiff }) => {
     let text = escapeHtml(siteLabel(site));
     if (importUpdatedAt) {
       const openParen = LANG === 'en' ? ' (' : '（';
@@ -2252,21 +2256,24 @@ function renderImportChecklist() {
   }
 
   lastImportOverwriteInfo = computeImportOverwriteInfo();
-  const warningHtml = renderImportWarningBoxHtml(lastImportOverwriteInfo);
+  // 🐛 fix: 新規描画時点ではチェックボックスは全て`checked`（=全サイト選択済み）で
+  // 生成されるため、初期表示の警告内訳もそれに合わせて全visibleサイトを選択中として渡す。
+  // 以後チェックが変わるたびの更新はupdateImportWarningBox()側が担う。
+  const warningHtml = renderImportWarningBoxHtml(lastImportOverwriteInfo, lastImportOverwriteInfo.visible.map(v => v.site.id));
 
   if (lastImportDetected.length === 0) {
     // 🌳 コードに含まれるのが非公開（hidden）サイトのデータのみの場合、選べる項目が
     // 無いのに「復元するサイトを選んでください」ヘッダーや、空の0件チェックリスト＋
     // 動作する全選択/全解除ピルを表示するのは不自然。専用の説明文だけを表示する
     // （復元自体はconfirmImport()側でhiddenSitesとして常に行われる）。
-    siteAreaEl.innerHTML = warningHtml + `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.hiddenOnlyImportNotice')}</div>`;
+    siteAreaEl.innerHTML = `<div id="importWarningBox">${warningHtml}</div>` + `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.hiddenOnlyImportNotice')}</div>`;
     return;
   }
 
   // 🆕 サイト単位ではなくプロフィール単位での引き継ぎ絞り込み：選択肢に出すのは、この
   // コードの送り出し側に登録されていたプロフィール一覧（この端末側の一覧ではない）。
   const importedProfiles = getImportedProfilesList();
-  siteAreaEl.innerHTML = warningHtml +
+  siteAreaEl.innerHTML = `<div id="importWarningBox">${warningHtml}</div>` +
     `<div class="status-msg" style="margin-bottom:6px;">${t('dyn.selectSitesToRestore')}</div>` +
     `<div class="list-select-row">
       <button type="button" class="list-select-btn" onclick="setAllSiteCheckboxes('#importSiteArea .import-site-checkbox', true); renderImportConfirmArea();">${t('page.selectAllBtn')}</button>
@@ -2326,12 +2333,30 @@ function onImportProfileFilterChange(siteId, value) {
 // 再描画しない（renderImportChecklist()は呼ばず、confirmAreaElのみ更新する）。
 // この関数はチェックボックスのonchangeからも呼ばれ、選択変更のたびにhasRiskを
 // 再評価してボタンのonclick先を最新の状態に保つ。
+//
+// 🐛 fix: チェックボックスが変わるたびに呼ばれるこの関数から、上書き警告ボックス
+// （「既にこの端末にデータがあり、上書きされるサイト」一覧）も選択中のサイトだけに
+// 絞って更新する。ボックスの中身だけを差し替えるため、他サイトのチェック状態や
+// プロフィール絞り込みセレクターには影響しない。
+function updateImportWarningBox() {
+  const boxWrapEl = document.getElementById('importWarningBox');
+  if (!boxWrapEl || !lastImportOverwriteInfo) return;
+  boxWrapEl.innerHTML = renderImportWarningBoxHtml(lastImportOverwriteInfo, getCheckedImportSiteIds());
+}
+
 function renderImportConfirmArea() {
   const confirmAreaEl = document.getElementById('importConfirmArea');
   if (!lastImportDetected || !lastImportDataKeys) {
     confirmAreaEl.innerHTML = '';
     return;
   }
+  updateImportWarningBox();
+  const hasRisk = computeSelectedOverwriteRisk(lastImportOverwriteInfo, getCheckedImportSiteIds());
+  // 🐛 fix: 2段階確認（「上書きして復元 — 元に戻せません」）を表示中でも、その後の
+  // チェックボックス変更でリスク対象サイトが外されてhasRiskがfalseになったなら、
+  // Cancelを経由しなくても通常の1クリック復元ボタンへ戻す。旧実装はここで無条件に
+  // 確認UIを表示し続けており、チェックを外しても表示が更新されなかった。
+  if (importOverwriteConfirming && !hasRisk) importOverwriteConfirming = false;
   if (importOverwriteConfirming) {
     confirmAreaEl.innerHTML = `
       <div class="import-overwrite-confirm">
@@ -2341,7 +2366,6 @@ function renderImportConfirmArea() {
       </div>`;
     return;
   }
-  const hasRisk = computeSelectedOverwriteRisk(lastImportOverwriteInfo, getCheckedImportSiteIds());
   confirmAreaEl.innerHTML = `<button type="button" class="action-btn primary" onclick="${hasRisk ? 'importRestoreClicked()' : 'confirmImport()'}">${t('dyn.restoreBtn')}</button>`;
 }
 function importRestoreClicked() {
