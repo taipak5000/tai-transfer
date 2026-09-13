@@ -336,7 +336,7 @@
        しまうため、position/top/border-bottom を明示的に上書きする（top:autoが特に必須。
        指定しないと上部navのtop:0が漏れて画面全体を覆う要素になってしまう）。 */
     .site-dock {
-      display: flex; position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: 90;
+      display: flex; position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: 1001;
       padding: 6px 10px calc(8px + env(safe-area-inset-bottom));
       background: var(--card); border-bottom: none;
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1060,11 +1060,13 @@ function pfCloseOtherTopLevelOverlays(exceptId) {
 // Esc＝開いているモーダルを閉じる）。Escはテキスト入力中でも常に有効（ダイアログを閉じる
 // のはユーザーの期待に沿うため）。?とdは、テキスト入力中は通常の文字入力として使えるよう
 // ガードする。
+const NON_TEXT_INPUT_TYPES = ['checkbox', 'radio', 'range', 'color', 'button', 'submit', 'reset', 'file', 'image', 'hidden'];
 document.addEventListener('keydown', function (e) {
   if (e.repeat) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const tgt = e.target;
-  const isTyping = tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.tagName === 'SELECT' || tgt.isContentEditable);
+  const isTextInput = tgt && tgt.tagName === 'INPUT' && NON_TEXT_INPUT_TYPES.indexOf((tgt.type || '').toLowerCase()) === -1;
+  const isTyping = tgt && (isTextInput || tgt.tagName === 'TEXTAREA' || tgt.tagName === 'SELECT' || tgt.isContentEditable);
 
   if (e.key === 'Escape') {
     closeTopmostOpenModal();
