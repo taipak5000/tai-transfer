@@ -367,7 +367,12 @@
     .modal-overlay.show { animation: iosFade 0.32s cubic-bezier(0.25, 1, 0.5, 1); }
     .modal-overlay.is-closing { display: flex; pointer-events: none; }
     .modal-card {
-      width: 100%; max-width: 100%; max-height: 88vh; max-height: 88dvh;
+      /* 📐 幅の統一（cross-site consistency）: 基準サイト item の .wrap と同じ
+         max-width: 720px（850px以上で960px）を、ここでは「通常サイズの」ボトムシート
+         モーダル全般の基準値として使う（旧: 560px以上で600pxだった独自基準を是正）。
+         モバイル幅では実際のビューポート幅の方が狭いため、この基準値自体は見た目に
+         影響しない（従来の max-width:100% と同じ edge-to-edge のまま）。 */
+      width: 100%; max-width: 720px; max-height: 88vh; max-height: 88dvh;
       border-radius: var(--r) var(--r) 0 0;
       box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.25);
       position: relative; overscroll-behavior: contain;
@@ -375,9 +380,15 @@
       animation: sheetSlideUp 0.32s cubic-bezier(0.25, 1, 0.5, 1);
       transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
     }
+    /* ⚙️ 表示設定モーダルだけは他サイトの多くと同様、意図的に狭いまま据え置く
+       （トグル数個の短いリストは720-960px幅より狭い方が読みやすいため）。
+       この分岐点（560px）自体は従来から変えていない — 変えたのは一般モーダルの
+       基準値・分岐点（下のmin-width:850pxブロック）だけ。 */
     @media (min-width: 560px) {
-      .modal-card { max-width: 600px; }
       #settingsModal .modal-card { max-width: 360px; }
+    }
+    @media (min-width: 850px) {
+      .modal-card { max-width: 960px; }
     }
     .modal-card.is-dragging, .modal-card.js-anim { transition: none; animation: none; cursor: grabbing; user-select: none; }
     .modal-card::before {
@@ -934,14 +945,21 @@ function syncSettingsLangButtons() {
 }
 
 function settingsOpen() {
+  // 既に開いている場合は何もしない（「?」ショートカットは他のモーダルが開いているか
+  // 確認せず呼ばれるため、ここでガードしないとtrapPush側のトリガー参照がモーダル内の
+  // 要素で上書きされ、閉じたときにフォーカスの戻し先を見失う）
+  if (document.getElementById('settingsModal').classList.contains('show')) return;
+  pfCloseOtherTopLevelOverlays('settingsModal');
   const cb = document.getElementById('shortcutsCheckbox');
   if (cb) cb.checked = skyShortcutsEnabled();
   applyThemeToDOM();
   syncSettingsLangButtons();
   document.getElementById('settingsModal').classList.add('show');
+  trapPush('settingsModal', document.querySelector('#settingsModal .modal-card'));
 }
 function settingsClose() {
   document.getElementById('settingsModal').classList.remove('show');
+  trapPop('settingsModal');
 }
 function onShortcutsCheckboxChange() {
   const cb = document.getElementById('shortcutsCheckbox');
@@ -957,7 +975,85 @@ function closeTopmostOpenModal() {
   const modal = document.getElementById('settingsModal');
   if (modal && modal.classList.contains('show')) { settingsClose(); return; }
   const sidebar = document.getElementById('sidebar');
-  if (sidebar && sidebar.classList.contains('sidebar-open')) { toggleSidebar(); return; }
+  if (sidebar && sidebar.classList.contains('sidebar-open')) { sidebarClose(); return; }
+}
+
+/* ================================================================
+   ♿ キーボードフォーカストラップ（wingsのtrapPush/trapPop実装を移植）
+   モーダル/ドロワーが開いている間はTab/Shift+Tabをその中に閉じ込め、閉じたら
+   開く前にフォーカスしていた要素へ戻す。スタック化されているため、モーダルの
+   中からさらに別モーダルを開くネストにも自動的に対応できる。
+   ================================================================ */
+const trapStack = [];
+let trapListenerAttached = false;
+
+// モーダル内でTab移動の対象になる要素（表示されているものだけ）を取得する
+function trapFocusableEls(container) {
+  const all = container.querySelectorAll(
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  );
+  return Array.prototype.filter.call(all, el => el.offsetParent !== null);
+}
+
+// Tabキーがモーダルの外（＝背後のページ）に出ていかないよう、スタック最上段の
+// カードの先頭/末尾要素で折り返す
+function trapKeydown(e) {
+  if (e.key !== 'Tab' || !trapStack.length) return;
+  const card = trapStack[trapStack.length - 1].card;
+  const focusable = trapFocusableEls(card);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first || !card.contains(document.activeElement)) {
+      e.preventDefault();
+      last.focus();
+    }
+  } else {
+    if (document.activeElement === last || !card.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+}
+
+// overlayIdをキーにカードへフォーカスを移し、Tabトラップのスタックに積む。同じ
+// overlayIdが既にスタックにある（＝多重呼び出し）場合は何もしない
+// （トリガー参照の上書き防止。各open関数側のガードと同じ考え方）。
+function trapPush(overlayId, card) {
+  if (!card || trapStack.some(s => s.overlayId === overlayId)) return;
+  trapStack.push({ overlayId, card, prevFocusEl: document.activeElement });
+  if (!trapListenerAttached) {
+    document.addEventListener('keydown', trapKeydown, true);
+    trapListenerAttached = true;
+  }
+  const focusable = trapFocusableEls(card);
+  (focusable[0] || card).focus();
+}
+
+// overlayIdをスタックから取り除き、そのモーダルを開く前にフォーカスしていた要素
+// （トリガー）へフォーカスを戻す。document.contains()は、トリガーが別のオーバーレイの
+// 再描画等で既にDOMから失われていた場合に備えた安全策。
+function trapPop(overlayId) {
+  const idx = trapStack.findIndex(s => s.overlayId === overlayId);
+  if (idx === -1) return;
+  const [entry] = trapStack.splice(idx, 1);
+  if (!trapStack.length && trapListenerAttached) {
+    document.removeEventListener('keydown', trapKeydown, true);
+    trapListenerAttached = false;
+  }
+  if (entry.prevFocusEl && typeof entry.prevFocusEl.focus === 'function' && document.contains(entry.prevFocusEl)) {
+    entry.prevFocusEl.focus();
+  }
+}
+
+// 表示設定モーダル／「他のツール」サイドバー・ドロワーの2つは下部ドックや「?」
+// ショートカットからいつでも独立して開けるため、どちらかが開いたままもう1つを
+// 開くとオーバーレイ同士が重なってしまう。開く前に、開こうとしているもの以外を
+// 閉じておく（各close関数は未オープン時は何もしない安全な関数）。
+function pfCloseOtherTopLevelOverlays(exceptId) {
+  if (exceptId !== 'settingsModal' && document.getElementById('settingsModal').classList.contains('show')) settingsClose();
+  if (exceptId !== 'sidebar' && document.getElementById('sidebar').classList.contains('sidebar-open')) sidebarClose();
 }
 
 // ⌨️ 全ツール共通のキーボードショートカット（?＝表示設定を開く／d,D＝ダークモード切替／
@@ -985,9 +1081,22 @@ document.addEventListener('keydown', function (e) {
 /* ================================================================
    サイドバー開閉
    ================================================================ */
+function sidebarOpen() {
+  // 既に開いている場合は何もしない（ここでガードしないとtrapPush側のトリガー参照が
+  // ドロワー内の要素で上書きされ、閉じたときにフォーカスの戻し先を見失う）
+  if (document.getElementById('sidebar').classList.contains('sidebar-open')) return;
+  pfCloseOtherTopLevelOverlays('sidebar');
+  document.getElementById('sidebar').classList.add('sidebar-open');
+  document.getElementById('sidebarOverlay').classList.add('show');
+  trapPush('sidebar', document.getElementById('sidebar'));
+}
+function sidebarClose() {
+  document.getElementById('sidebar').classList.remove('sidebar-open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+  trapPop('sidebar');
+}
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('sidebar-open');
-  document.getElementById('sidebarOverlay').classList.toggle('show');
+  if (document.getElementById('sidebar').classList.contains('sidebar-open')) sidebarClose(); else sidebarOpen();
 }
 
 /* ================================================================
