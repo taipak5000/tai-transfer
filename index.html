@@ -1046,9 +1046,23 @@ function trapPush(overlayId, card) {
   (focusable[0] || card).focus();
 }
 
+// 🩹 連鎖オーバーレイのフォーカス誤復元バグ対策（第2弾）: trapNoteTrigger()による
+// 事前退避は「Bのトリガーを正しく記録する」問題は解決するが、それとは別に、
+// pfCloseOtherTopLevelOverlays()が他を閉じるために呼ぶtrapPop()自身が、この
+// 「連鎖的なpop」である間だけは自分の即時フォーカス復元を止めておく（wings/
+// spirit-catalog等、他サイトの実装と揃えるための保険。仮に将来trapNoteTrigger()の
+// 事前退避を経由しない新しい連鎖経路が増えても、ここで二重に防御できる）。
+// Escape等ユーザーが直接1つだけ閉じる通常のpopでは、このフラグは立たないので
+// 今までどおり即座に復元される。
+let pfSuppressTrapFocusRestore = 0;
+
 // overlayIdをスタックから取り除き、そのモーダルを開く前にフォーカスしていた要素
 // （トリガー）へフォーカスを戻す。document.contains()は、トリガーが別のオーバーレイの
-// 再描画等で既にDOMから失われていた場合に備えた安全策。
+// 再描画等で既にDOMから失われていた場合に備えた安全策。offsetParentのチェックは、
+// トリガーがDOM上には残っているものの（例：'?'ショートカットでBを開いた瞬間、実際に
+// フォーカスされていたのがサイドバー内のリンクだった場合など）、それを含むオーバーレイ
+// 自体が既に閉じてdisplay:noneになりフォーカス不可能になっているケースに備えたもの
+// ——この場合は無言で失敗させず、常に見えている下部ドックへ安全に逃がす。
 function trapPop(overlayId) {
   const idx = trapStack.findIndex(s => s.overlayId === overlayId);
   if (idx === -1) return;
@@ -1057,8 +1071,13 @@ function trapPop(overlayId) {
     document.removeEventListener('keydown', trapKeydown, true);
     trapListenerAttached = false;
   }
-  if (entry.prevFocusEl && typeof entry.prevFocusEl.focus === 'function' && document.contains(entry.prevFocusEl)) {
-    entry.prevFocusEl.focus();
+  if (pfSuppressTrapFocusRestore) return;
+  const el = entry.prevFocusEl;
+  if (el && typeof el.focus === 'function' && document.contains(el) && el.offsetParent !== null) {
+    el.focus();
+  } else {
+    const fallback = document.querySelector('.site-dock button, .site-dock a');
+    if (fallback) fallback.focus();
   }
 }
 
@@ -1067,8 +1086,13 @@ function trapPop(overlayId) {
 // 開くとオーバーレイ同士が重なってしまう。開く前に、開こうとしているもの以外を
 // 閉じておく（各close関数は未オープン時は何もしない安全な関数）。
 function pfCloseOtherTopLevelOverlays(exceptId) {
-  if (exceptId !== 'settingsModal' && document.getElementById('settingsModal').classList.contains('show')) settingsClose();
-  if (exceptId !== 'sidebar' && document.getElementById('sidebar').classList.contains('sidebar-open')) sidebarClose();
+  pfSuppressTrapFocusRestore++;
+  try {
+    if (exceptId !== 'settingsModal' && document.getElementById('settingsModal').classList.contains('show')) settingsClose();
+    if (exceptId !== 'sidebar' && document.getElementById('sidebar').classList.contains('sidebar-open')) sidebarClose();
+  } finally {
+    pfSuppressTrapFocusRestore--;
+  }
 }
 
 // ⌨️ 全ツール共通のキーボードショートカット（?＝表示設定を開く／d,D＝ダークモード切替／
