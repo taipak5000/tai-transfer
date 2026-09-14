@@ -949,6 +949,7 @@ function settingsOpen() {
   // 確認せず呼ばれるため、ここでガードしないとtrapPush側のトリガー参照がモーダル内の
   // 要素で上書きされ、閉じたときにフォーカスの戻し先を見失う）
   if (document.getElementById('settingsModal').classList.contains('show')) return;
+  trapNoteTrigger();
   pfCloseOtherTopLevelOverlays('settingsModal');
   const cb = document.getElementById('shortcutsCheckbox');
   if (cb) cb.checked = skyShortcutsEnabled();
@@ -986,6 +987,15 @@ function closeTopmostOpenModal() {
    ================================================================ */
 const trapStack = [];
 let trapListenerAttached = false;
+// 🩹 連鎖オーバーレイのフォーカス誤復元対策: Aを開いたまま、Bのトリガーをクリック/
+// '?'などでBを開く場合、内部のpfCloseOtherTopLevelOverlays()がtrapPush(B)より先に
+// Aをtrappop()し、その際entry.prevFocusEl.focus()でAのトリガーへ同期的にフォーカスが
+// 戻る。その直後にtrapPush(B)がdocument.activeElementを読むと、既にAのトリガーへ
+// 書き換わった後（＝Bを実際に開いた要素ではない）を拾ってしまう。対策として、各
+// open*()関数の冒頭、他オーバーレイを閉じる処理より前にtrapNoteTrigger()を呼び、
+// その瞬間の実際のトリガーを退避しておく。trapPush()は使えばすぐクリアする。
+let trapPendingTrigger = null;
+function trapNoteTrigger() { trapPendingTrigger = document.activeElement; }
 
 // モーダル内でTab移動の対象になる要素（表示されているものだけ）を取得する
 function trapFocusableEls(container) {
@@ -1021,8 +1031,13 @@ function trapKeydown(e) {
 // overlayIdが既にスタックにある（＝多重呼び出し）場合は何もしない
 // （トリガー参照の上書き防止。各open関数側のガードと同じ考え方）。
 function trapPush(overlayId, card) {
+  // 退避されたトリガーがあれば最優先で使い、使用有無に関わらず即クリアする（このoverlayIdが
+  // 二重登録ガードで弾かれて何も積まれない場合でも、退避値を次の無関係なtrapPush()呼び出しへ
+  // 持ち越さないため）。
+  const trigger = trapPendingTrigger !== null ? trapPendingTrigger : document.activeElement;
+  trapPendingTrigger = null;
   if (!card || trapStack.some(s => s.overlayId === overlayId)) return;
-  trapStack.push({ overlayId, card, prevFocusEl: document.activeElement });
+  trapStack.push({ overlayId, card, prevFocusEl: trigger });
   if (!trapListenerAttached) {
     document.addEventListener('keydown', trapKeydown, true);
     trapListenerAttached = true;
@@ -1087,6 +1102,7 @@ function sidebarOpen() {
   // 既に開いている場合は何もしない（ここでガードしないとtrapPush側のトリガー参照が
   // ドロワー内の要素で上書きされ、閉じたときにフォーカスの戻し先を見失う）
   if (document.getElementById('sidebar').classList.contains('sidebar-open')) return;
+  trapNoteTrigger();
   pfCloseOtherTopLevelOverlays('sidebar');
   document.getElementById('sidebar').classList.add('sidebar-open');
   document.getElementById('sidebarOverlay').classList.add('show');
