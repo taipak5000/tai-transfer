@@ -287,6 +287,10 @@
       width: 100%; max-width: 360px; max-height: 80vh; overflow-y: auto;
       background: var(--card); border-radius: var(--r); padding: 20px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box;
+      /* 🩹 .site-dock（画面下部固定、z-index:1001でこのカードより常に手前）に
+         最後の項目（設定を閉じるボタン）が隠れないよう下端だけ底上げ。
+         body{padding-bottom}と同じ「下部クイックアクセスドック分の余白」。 */
+      padding-bottom: calc(76px + env(safe-area-inset-bottom));
     }
     .modal-card h3 {
       margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--text);
