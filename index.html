@@ -1259,10 +1259,13 @@ const SITE_CATALOG = [
     // （いずれもnsKey()を経由しないグローバルキー、上の設定系キーと同じ理由でここに含める）
     'taiScoreTitles_v1', 'taiScoreLibrarySort_v1', 'taiScoreMetronomeEnabled_v1'
   ]},
-  // 🎴 星紡ぎカード（tai-card）もまだ一般公開しておらず、他サイトのサイドバーからも
-  // リンクを外している（未告知のため）ので hidden:true として扱う。プロフィールごとに
-  // nsKey()で分離される保存状態を持つため namespaced:true（tai-card/index.htmlのSTATE_KEY参照）。
-  { id: 'tai-card', label: '星紡ぎカード', labelEn: 'Star-Spinning Cards', namespaced: true, hidden: true, keys: [
+  // 🩹 fix: 星紡ぎカード（tai-card）は2026-09-19に公開済みツールとしてサイドバーへ
+  // リンクが追加されている（このファイル自身のサイドバー参照）が、hidden:trueの
+  // 解除（バックアップ対象カタログの公開扱いへの更新）が同時に行われておらず、
+  // 楽譜づくり（tai-score）公開時とは異なり取り残されていた。既に公開済みのため
+  // 他の公開ツールと同様チェックリストに表示する。プロフィールごとにnsKey()で
+  // 分離される保存状態を持つため namespaced:true（tai-card/index.htmlのSTATE_KEY参照）。
+  { id: 'tai-card', label: '星紡ぎカード', labelEn: 'Star-Spinning Cards', namespaced: true, keys: [
     'taiCardState_v1'
   ]},
   { id: 'currency', label: '所持通貨（共通）', labelEn: 'Owned Currency (Shared)', namespaced: true, keys: [
@@ -1271,8 +1274,8 @@ const SITE_CATALOG = [
   // 🔒 このsky_tracker_storage_v3等のキー一式は、star-candle登場前の旧ノーマルキャンドル
   // 計算機（現skyzztai.management.tool／tai-nomacan-pro）が今も実際に使っている現行データ
   // であり、"旧版"はstar-candleとの新旧関係を指すだけで、このツール自体が退役済みという
-  // 意味ではない。skyzztai.management.tool はまだ一般公開していないサイトのため、
-  // spirit-catalog/score/tai-cardと同様 hidden:true とし、ラベル（"リアルム/エリア情報"
+  // 意味ではない。skyzztai.management.tool（tai-nomacan-pro）はまだ一般公開していない
+  // サイトのため、spirit-catalogと同様 hidden:true とし、ラベル（"リアルム/エリア情報"
   // という当該サイト固有の特徴的な機能名を含む）をチェックリストに出さない。既存データを
   // 引き継ぎから静かに消さないよう、対象キーとしては変わらず常に含める。
   { id: 'skyzztai', label: 'ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', labelEn: 'Normal Candle Calculator (Legacy · Realm/Area Info)', namespaced: false, hidden: true, keys: [
