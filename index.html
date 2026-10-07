@@ -133,7 +133,6 @@
       width: 100%; box-sizing: border-box; white-space: nowrap;
     }
     .sidebar-nav-link:hover { background: var(--bg); }
-    .sidebar-nav-link.current-tool { background: var(--purple-bg); color: var(--purple-d); font-weight: 700; }
     /* 精度に不安がある新機能であることを示す小さな注記（例: 楽譜づくり） */
     .tool-badge-test { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.3px; }
 
@@ -314,7 +313,7 @@
       padding: 6px 12px; font-size: 12px; border-radius: 20px; cursor: pointer; font-weight: 700; white-space: nowrap;
     }
     /* 🌐 表示設定モーダル内の言語セレクター（1言語=1ボタン。トグルではなく選択式）。
-       選択中の言語は.sidebar-nav-link.current-toolと同じpurpleアクセント配色で強調する。 */
+       選択中の言語はpurpleアクセント配色（--purple-bg/--purple-d）で強調する。 */
     .lang-select-row { display: flex; gap: 8px; }
     .lang-select-btn {
       flex: 1; background: var(--card); border: 1px solid var(--sep); color: var(--text);
@@ -458,20 +457,7 @@
       <div class="sidebar-section-label" data-i18n="sidebar.relatedToolsLabel"></div>
       <button class="sidebar-close-btn" onclick="toggleSidebar()"><span class="icon-chip" style="width:22px; height:22px;"><svg width="16" height="16"><use href="#i-close"/></svg></span></button>
     </div>
-    <a href="https://taipak5000.github.io/tai-item/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-folder"/></svg> <span data-i18n="tools.item"></span></a>
-    <a href="https://taipak5000.github.io/tai-emote/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-masks"/></svg> <span data-i18n="tools.emote"></span></a>
-    <a href="https://taipak5000.github.io/share/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-pin"/></svg> <span data-i18n="tools.share"></span></a>
-    <a href="https://taipak5000.github.io/tai-nomacan/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-candle"/></svg> <span data-i18n="tools.taiNomacan"></span></a>
-    <a href="https://taipak5000.github.io/star-candle/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-star-candle"/></svg> <span data-i18n="tools.starCandle"></span></a>
-    <a href="https://taipak5000.github.io/companion/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-sparkle"/></svg> <span data-i18n="tools.companion"></span></a>
-    <a href="https://taipak5000.github.io/wings/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-wing"/></svg> <span data-i18n="tools.wings"></span></a>
-    <a href="https://taipak5000.github.io/tai-catalog/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-tree"/></svg><span class="tool-badge-test">test</span> <span data-i18n="tools.catalog"></span></a>
-    <a href="https://taipak5000.github.io/tai-revisit/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-wing"/></svg> <span data-i18n="tools.revisit"></span></a>
-    <a href="https://taipak5000.github.io/tai-score/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-music-note"/></svg><span class="tool-badge-test">test</span> <span data-i18n="tools.score">楽譜づくり</span></a>
-    <a href="https://taipak5000.github.io/tai-card/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-card"/></svg> <span data-i18n="tools.card"></span></a>
-    <a href="https://taipak5000.github.io/tai-transfer/" class="sidebar-nav-link current-tool"><svg class="inline-icon" width="15" height="15"><use href="#i-sync"/></svg> <span data-i18n="tools.dataTransfer"></span></a>
-    <a href="https://taipak5000.github.io/tai-info/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-settings"/></svg> <span data-i18n="tools.taiInfo"></span></a>
-    <a href="https://taipak5000.github.io/skyzztai-profile/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#i-person"/></svg> <span data-i18n="tools.profile">作者プロフィール</span></a>
+    <div id="sidebarLinks"></div>
   </aside>
 
   <div class="wrap">
@@ -591,20 +577,7 @@ let LANG = localStorage.getItem(LANG_KEY) || 'ja';
 const I18N = {
   ja: {
     'page.title': 'データ引継ぎ - Sky所持率管理',
-    'tools.item': 'アイテム所持管理',
-    'tools.emote': 'エモート所持率管理',
-    'tools.share': '創作物管理ツール',
-    'tools.taiNomacan': 'ノマキャン計算機',
-    'tools.starCandle': '星のキャンドル計算機',
-    'tools.companion': '精霊同行ツール',
-    'tools.wings': '羽トラッカー',
-    'tools.catalog': '精霊ツリー管理',
-    'tools.revisit': '再訪精霊データベース',
-    'tools.score': '楽譜づくり',
-    'tools.card': '星紡ぎカード',
     'tools.dataTransfer': 'データ引継ぎ',
-    'tools.taiInfo': '設定・クレジット',
-    'tools.profile': '作者プロフィール',
     'sidebar.relatedToolsLabel': '関連ツール',
     'dock.ariaLabel': 'クイックメニュー',
     'dock.export': 'エクスポート',
@@ -703,20 +676,7 @@ const I18N = {
   },
   en: {
     'page.title': 'Data Transfer - Sky Collection Tracker',
-    'tools.item': 'Item Collection',
-    'tools.emote': 'Emote Collection',
-    'tools.share': 'Creation Manager',
-    'tools.taiNomacan': 'Nomacan Calculator',
-    'tools.starCandle': 'Star Candle Calculator',
-    'tools.companion': 'Spirit Companion Tool',
-    'tools.wings': 'Wing Tracker',
-    'tools.catalog': 'Spirit Tree Catalog',
-    'tools.revisit': 'Revisit Spirit Database',
-    'tools.score': 'Sheet Music Maker',
-    'tools.card': 'Self-Intro Card Maker',
     'tools.dataTransfer': 'Data Transfer',
-    'tools.taiInfo': 'Settings & Credits',
-    'tools.profile': 'Creator Profile',
     'sidebar.relatedToolsLabel': 'Related Tools',
     'dock.ariaLabel': 'Quick Menu',
     'dock.export': 'Export',
@@ -865,6 +825,7 @@ function setLang(lang) {
   renderExportOutput();
   renderImportSiteArea();
   renderTransferHistory(); // 書き出し/読込履歴ログの文言・サイト名・日時表記も、言語切替時に更新する
+  renderSiteLinks(); // サイドバーの「関連ツール」のラベルも言語に追従させる
   syncSettingsLangButtons();
 }
 
@@ -1154,6 +1115,46 @@ function sidebarClose() {
 }
 function toggleSidebar() {
   if (document.getElementById('sidebar').classList.contains('sidebar-open')) sidebarClose(); else sidebarOpen();
+}
+
+/* ================================================================
+   🧭 共通「関連ツール」一覧（サイドバー）
+   一覧の元データは1か所だけ: https://taipak5000.github.io/tai-item/site-links.json
+   （itemリポジトリ）。そこを編集すると全サイトのサイドバーに反映される。
+   取得結果は端末にキャッシュし、オフラインでも前回の一覧で表示する。
+   ※このサイトにはService Workerが無いため、反映は次回の読み込み時（取得成功時に即再描画）
+   ================================================================ */
+const SITE_LINKS_URL = 'https://taipak5000.github.io/tai-item/site-links.json';
+const SITE_LINKS_CACHE_KEY = 'sky_site_links_v1'; // 端末単位・全サイト共通（プロフィールには依存しない）
+let siteLinksData = null;
+
+function siteLinksParse(d) {
+  if (!d || !Array.isArray(d.tools)) return null;
+  const ok = d.tools.filter(t => t && /^[A-Za-z0-9._-]+$/.test(t.path) && /^i-[a-z0-9-]+$/.test(t.icon));
+  return ok.length ? ok : null;
+}
+function siteLinksLoadCached() {
+  try { return siteLinksParse(JSON.parse(localStorage.getItem(SITE_LINKS_CACHE_KEY))); } catch (e) { return null; }
+}
+async function siteLinksRefresh() { // 一覧が変わったらtrue
+  const res = await fetch(SITE_LINKS_URL, { cache: 'no-cache' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const raw = await res.json();
+  const tools = siteLinksParse(raw);
+  if (!tools) throw new Error('invalid site-links.json');
+  const changed = JSON.stringify(tools) !== JSON.stringify(siteLinksData);
+  siteLinksData = tools;
+  try { localStorage.setItem(SITE_LINKS_CACHE_KEY, JSON.stringify(raw)); } catch (e) {}
+  return changed;
+}
+function siteLinkName(tool, lang) { return tool[lang] || tool.en || tool.ja; }
+function renderSiteLinks() {
+  const nav = document.getElementById('sidebarLinks');
+  if (!nav) return;
+  if (!siteLinksData) { nav.innerHTML = '<p class="hint">ツール一覧を読み込めませんでした / Could not load the tool list</p>'; return; }
+  nav.innerHTML = siteLinksData.map(t =>
+    `<a href="https://taipak5000.github.io/${t.path}/" class="sidebar-nav-link"><svg class="inline-icon" width="15" height="15"><use href="#${t.icon}"/></svg>${t.badgeTest ? '<span class="tool-badge-test">test</span> ' : ' '}${escapeHtml(siteLinkName(t, LANG))}</a>`
+  ).join('');
 }
 
 /* ================================================================
@@ -2691,6 +2692,9 @@ function confirmImport() {
    ================================================================ */
 applyI18n();
 applyThemeToDOM();
+siteLinksData = siteLinksLoadCached(); // 🧭 サイドバーの「関連ツール」：まず端末キャッシュで描画し、裏で最新を取得
+renderSiteLinks();
+siteLinksRefresh().then(changed => { if (changed) renderSiteLinks(); }).catch(() => renderSiteLinks());
 refreshSiteSnapshots(); // 🕒 このツールの「最終更新」把握を、今この端末にある最新の中身に合わせて更新する
 renderExportSiteList();
 renderTransferHistory(); // 🕒 書き出し/読込履歴ログを初期表示する
