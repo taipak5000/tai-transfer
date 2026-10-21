@@ -414,7 +414,7 @@
     }
   </style>
 <script id="side-panels-early">
-  // 🪟 ワイド画面（幅1280px以上）のサイドパネル（関連ツール＝左端）を使う設定なら、描画前にレイアウト用の
+  // 🪟 ワイド画面（幅1280px以上）のサイドパネル（関連ツール＝左端／ダッシュボード＝右端）を使う設定なら、描画前にレイアウト用の
   // クラスを付ける（JS起動後に付けると本文が左右にずれて画面がガクつくため）。設定のキーはtai-hubの
   // 「表示設定 > ワイド画面でサイドパネルを表示」と共通（未設定＝オン）。実際に出るのは幅1280px以上の時だけ（下のCSSのメディアクエリ）。
   (function () {
@@ -423,11 +423,13 @@
       var on = true;
       try { on = localStorage.getItem('sky_hub_side_panels') !== '0'; } catch (e) {}
       cls.toggle('side-panels-on', on);
+      cls.toggle('side-dash-on', on);
     }
     apply();
     window.addEventListener('storage', function (e) { if (e.key === 'sky_hub_side_panels') apply(); });
   })();
 </script>
+<script defer src="/tai-item/side-dashboard.js" onerror="document.documentElement.classList.remove('side-dash-on')"></script>
 <style id="side-panels-css">
 /* 🪟 ワイド画面のサイドパネル（関連ツール＝左端／ダッシュボード＝右端）。tai-hubの同名機能と同じ仕様:
    幅1280px以上で、html.side-panels-on（左）/ html.side-dash-on（右）が付いている時だけ出る。
