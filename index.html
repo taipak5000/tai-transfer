@@ -738,6 +738,7 @@ const I18N = {
     'dyn.downloadBtn': 'ファイルとしてダウンロード（推奨）',
     'dyn.showCodeBtn': 'コードをテキストで表示してコピー',
     'dyn.copyCodeBtn': 'コードをコピー',
+    'dyn.codeTooLongHint': 'コードが長くてコピーや貼り付けがうまくいかないときは、上の「ファイルとしてダウンロード」を使ってください。ホーム画面に追加したアプリで使っている方も、ファイルでの引き継ぎが確実です。tai-hubの「データ引継ぎ」→「コードから復元」でファイルを選べば復元できます。',
     'dyn.showQrBtn': 'QRコードを表示',
     'dyn.qrLoading': 'QRコードを準備中…',
     'dyn.qrAlt': 'データ引き継ぎ用のQRコード',
@@ -837,6 +838,7 @@ const I18N = {
     'dyn.downloadBtn': 'Download as File (Recommended)',
     'dyn.showCodeBtn': 'Show Code as Text to Copy',
     'dyn.copyCodeBtn': 'Copy Code',
+    'dyn.codeTooLongHint': 'If the code is too long to copy or paste, use "Download as File" above instead. This is also the most reliable way if you use a home-screen app. In tai-hub, choose the file under "Data Transfer" → "Restore from a Code".',
     'dyn.showQrBtn': 'Show QR Code',
     'dyn.qrLoading': 'Preparing QR code…',
     'dyn.qrAlt': 'QR code for data transfer',
@@ -2072,6 +2074,7 @@ function renderExportTextareaArea() {
   area.innerHTML = `
     <textarea id="codeOutput" class="code-textarea" readonly onclick="this.select()">${escapeHtml(lastExportCode)}</textarea>
     <button type="button" class="action-btn secondary" onclick="copyExportCode()">${t('dyn.copyCodeBtn')}</button>
+    <div class="hint" style="margin:8px 0 0;">${t('dyn.codeTooLongHint')}</div>
   `;
 }
 
